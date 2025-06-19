@@ -18,7 +18,7 @@
     -fx-text-fill: white;
 }
 
-/* 左侧 Tab 文本竖排显示 */
+/* 左侧 Tab 文本竖排显示：直接在文本中使用換行符实现 */
 .tab-pane:left .tab-header-area .tab-label {
-    -fx-rotate: 90;
+    -fx-alignment: center;
 }

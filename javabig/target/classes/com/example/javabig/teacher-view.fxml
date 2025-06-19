@@ -17,13 +17,13 @@
     <center>
         <TabPane fx:id="mainTabPane" side="LEFT" tabMinWidth="100" tabMinHeight="40">
             <tabs>
-                <Tab text="系统首页">
+                <Tab text="系&#10;统&#10;首&#10;页">
                     <AnchorPane>
                         <Label text="欢迎进入系统首页" AnchorPane.leftAnchor="20" AnchorPane.topAnchor="20" />
                     </AnchorPane>
                 </Tab>
 
-                <Tab text="题库信息">
+                <Tab text="题&#10;库&#10;信&#10;息">
                     <AnchorPane>
                         <children>
                             <VBox spacing="10"
@@ -46,7 +46,7 @@
                     </AnchorPane>
                 </Tab>
 
-                <Tab fx:id="addChoiceTab" text="试题新增">
+                <Tab fx:id="addChoiceTab" text="试&#10;题&#10;新&#10;增">
                     <AnchorPane>
                         <children>
                             <VBox spacing="10"
@@ -106,15 +106,25 @@
                     </AnchorPane>
                 </Tab>
 
-                <Tab text="学生管理">
+                <Tab text="学&#10;生&#10;管&#10;理">
                     <AnchorPane>
-                        <Label text="学生管理功能待实现"
-                               AnchorPane.leftAnchor="20"
-                               AnchorPane.topAnchor="20" />
+                        <TableView fx:id="studentTable"
+                                   AnchorPane.topAnchor="10"
+                                   AnchorPane.bottomAnchor="10"
+                                   AnchorPane.leftAnchor="10"
+                                   AnchorPane.rightAnchor="10">
+                            <columns>
+                                <TableColumn fx:id="studentNameColumn" text="名称" prefWidth="120" />
+                                <TableColumn fx:id="studentEmailColumn" text="邮箱" prefWidth="160" />
+                                <TableColumn fx:id="studentPhoneColumn" text="手机号" prefWidth="120" />
+                                <TableColumn fx:id="studentCreatedColumn" text="创建时间" prefWidth="150" />
+                                <TableColumn fx:id="studentActionColumn" text="操作" prefWidth="160" />
+                            </columns>
+                        </TableView>
                     </AnchorPane>
                 </Tab>
 
-                <Tab text="试卷管理">
+                <Tab text="试&#10;卷&#10;管&#10;理">
                     <AnchorPane>
                         <Label text="试卷管理功能待实现"
                                AnchorPane.leftAnchor="20"
