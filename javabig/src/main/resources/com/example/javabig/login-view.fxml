@@ -3,18 +3,21 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="10" alignment="center" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.javabig.LoginController">
-    <GridPane hgap="10" vgap="10">
-        <Label text="用户名：" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="usernameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+<VBox fx:id="loginForm" spacing="10" alignment="CENTER"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.javabig.LoginController"
+      stylesheets="@auth.css">
 
-        <Label text="密码：" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <PasswordField fx:id="passwordField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-    </GridPane>
+    <Label text="登录你的账号" styleClass="form-title" />
 
-    <HBox spacing="20">
-        <Button text="登录" onAction="#handleLoginButtonAction"/>
-        <Button text="注册" onAction="#handleShowRegisterAction"/>
+    <TextField fx:id="usernameField" promptText="输入你的用户名" />
+    <PasswordField fx:id="passwordField" promptText="输入你的密码" />
+
+    <Button text="GO" onAction="#handleLoginButtonAction" styleClass="submit" />
+
+    <HBox fx:id="linkBox" alignment="CENTER" spacing="5" styleClass="signup-link">
+        <Label text="还没有账号?" />
+        <Hyperlink text="注册" onAction="#handleShowRegisterAction" />
     </HBox>
 </VBox>

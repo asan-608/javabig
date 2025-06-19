@@ -19,7 +19,7 @@ public class MainApp extends Application {
         try {
             FXMLLoader loader = new FXMLLoader(MainApp.class.getResource("login-view.fxml"));
             primaryStage.setTitle("登录");
-            primaryStage.setScene(new Scene(loader.load(), 400, 250));
+            primaryStage.setScene(new Scene(loader.load(), 315, 385));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -29,7 +29,7 @@ public class MainApp extends Application {
         try {
             FXMLLoader loader = new FXMLLoader(MainApp.class.getResource("register-view.fxml"));
             primaryStage.setTitle("注册");
-            primaryStage.setScene(new Scene(loader.load(), 400, 300));
+            primaryStage.setScene(new Scene(loader.load(), 315, 385));
         } catch (Exception e) {
             e.printStackTrace();
         }

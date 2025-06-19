@@ -13,14 +13,18 @@ public class RegisterController {
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
     @FXML private PasswordField confirmField;
+    @FXML private TextField phoneField;
+    @FXML private TextField emailField;
 
     @FXML
     private void handleRegisterButtonAction() {
         String user = usernameField.getText().trim();
         String pass = passwordField.getText();
         String conf = confirmField.getText();
+        String phone = phoneField.getText().trim();
+        String email = emailField.getText().trim();
 
-        if (user.isEmpty() || pass.isEmpty() || conf.isEmpty()) {
+        if (user.isEmpty() || pass.isEmpty() || conf.isEmpty() || phone.isEmpty() || email.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "请输入完整信息");
             return;
         }
@@ -32,11 +36,13 @@ public class RegisterController {
         // 简单 SHA-256 哈希（生产环境建议使用 BCrypt）
         String hash = sha256(pass);
 
-        String sql = "INSERT INTO users (username, password_hash) VALUES (?, ?)";
+        String sql = "INSERT INTO users (username, password_hash, phone, email) VALUES (?, ?, ?, ?)";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, user);
             ps.setString(2, hash);
+            ps.setString(3, phone);
+            ps.setString(4, email);
             ps.executeUpdate();
             showAlert(Alert.AlertType.INFORMATION, "注册成功，请登录");
             // 跳回登录

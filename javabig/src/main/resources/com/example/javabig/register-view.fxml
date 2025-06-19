@@ -3,21 +3,24 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="10" alignment="center" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.javabig.RegisterController">
-    <GridPane hgap="10" vgap="10">
-        <Label text="用户名：" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="usernameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+<VBox fx:id="registerForm" spacing="10" alignment="CENTER"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.javabig.RegisterController"
+      stylesheets="@auth.css">
 
-        <Label text="密码：" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <PasswordField fx:id="passwordField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+    <Label text="创建你的免费账号" styleClass="form-title" />
 
-        <Label text="确认密码：" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <PasswordField fx:id="confirmField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-    </GridPane>
+    <TextField fx:id="usernameField" promptText="输入 username" />
+    <PasswordField fx:id="passwordField" promptText="输入密码" />
+    <PasswordField fx:id="confirmField" promptText="再次确认密码" />
+    <TextField fx:id="phoneField" promptText="输入手机号" />
+    <TextField fx:id="emailField" promptText="输入邮箱" />
 
-    <HBox spacing="20">
-        <Button text="提交注册" onAction="#handleRegisterButtonAction"/>
-        <Button text="返回登录" onAction="#handleShowLoginAction"/>
+    <Button text="GO" onAction="#handleRegisterButtonAction" styleClass="submit" />
+
+    <HBox fx:id="linkBox" alignment="CENTER" spacing="5" styleClass="signup-link">
+        <Label text="已有账号?" />
+        <Hyperlink text="登录" onAction="#handleShowLoginAction" />
     </HBox>
 </VBox>

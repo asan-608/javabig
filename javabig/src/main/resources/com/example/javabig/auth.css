@@ -1,0 +1,48 @@
+#loginForm, #registerForm {
+    -fx-background-color: #ffffff;
+    -fx-padding: 16;
+    -fx-spacing: 10;
+    -fx-alignment: center;
+    -fx-max-width: 350;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 4);
+}
+
+.form-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #000000;
+}
+
+.text-field, .password-field {
+    -fx-background-color: #ffffff;
+    -fx-padding: 8 8 8 8;
+    -fx-pref-width: 300;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 8;
+    -fx-background-insets: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 1, 0, 0, 1);
+}
+
+.submit {
+    -fx-background-color: #4F46E5;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: 500;
+    -fx-padding: 8 20 8 20;
+    -fx-background-radius: 8;
+    -fx-pref-width: 100%;
+}
+
+.signup-link {
+    -fx-spacing: 5;
+}
+
+.signup-link > .label {
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 12px;
+}
+
+.signup-link > .hyperlink {
+    -fx-text-fill: #4F46E5;
+    -fx-underline: true;
+}
