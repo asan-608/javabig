@@ -17,3 +17,8 @@
     -fx-background-color: #4CAF50;
     -fx-text-fill: white;
 }
+
+/* 左侧 Tab 文本竖排显示 */
+.tab-pane:left .tab-header-area .tab-label {
+    -fx-rotate: 90;
+}

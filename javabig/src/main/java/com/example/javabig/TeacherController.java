@@ -19,6 +19,7 @@ import javafx.scene.control.ToggleGroup;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -48,6 +49,15 @@ public class TeacherController implements Initializable {
     @FXML private TableColumn<Question, Long> idColumn;
     @FXML private TableColumn<Question, String> contentColumn;
     @FXML private javafx.scene.control.Label teacherNameLabel;
+    @FXML private javafx.scene.control.Button topRightButton;
+
+    // 学生管理相关控件
+    @FXML private TableView<Student> studentTable;
+    @FXML private TableColumn<Student, String> studentNameColumn;
+    @FXML private TableColumn<Student, String> studentEmailColumn;
+    @FXML private TableColumn<Student, String> studentPhoneColumn;
+    @FXML private TableColumn<Student, String> studentCreatedColumn;
+    @FXML private TableColumn<Student, Void> studentActionColumn;
 
     // 当前教师（管理员）ID，需要在登录时赋值
     private long currentTeacherId = 0L;
@@ -71,6 +81,41 @@ public class TeacherController implements Initializable {
         if (contentColumn != null) {
             contentColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("content"));
         }
+
+        if (studentNameColumn != null) {
+            studentNameColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("username"));
+        }
+        if (studentEmailColumn != null) {
+            studentEmailColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("email"));
+        }
+        if (studentPhoneColumn != null) {
+            studentPhoneColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("phone"));
+        }
+        if (studentCreatedColumn != null) {
+            studentCreatedColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("createdAt"));
+        }
+        if (studentActionColumn != null) {
+            studentActionColumn.setCellFactory(col -> new javafx.scene.control.TableCell<>() {
+                private final javafx.scene.control.Button editBtn = new javafx.scene.control.Button("修改");
+                private final javafx.scene.control.Button delBtn = new javafx.scene.control.Button("删除");
+                private final javafx.scene.layout.HBox box = new javafx.scene.layout.HBox(5, editBtn, delBtn);
+                {
+                    editBtn.setOnAction(e -> {
+                        Student s = getTableView().getItems().get(getIndex());
+                        showEditStudentDialog(s);
+                    });
+                    delBtn.setOnAction(e -> {
+                        Student s = getTableView().getItems().get(getIndex());
+                        showDeleteStudentDialog(s);
+                    });
+                }
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setGraphic(empty ? null : box);
+                }
+            });
+        }
     }
 
     /** 加载当前教师的题库到表格 */
@@ -86,6 +131,26 @@ public class TeacherController implements Initializable {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     questionTable.getItems().add(new Question(rs.getLong(1), rs.getString(2)));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** 加载学生列表 */
+    private void loadStudents() {
+        if (studentTable == null) {
+            return;
+        }
+        studentTable.getItems().clear();
+        String sql = "SELECT user_id, username, email, phone, created_at FROM users WHERE role='user'";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    studentTable.getItems().add(new Student(
+                            rs.getLong(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5)));
                 }
             }
         } catch (SQLException e) {
@@ -117,7 +182,6 @@ public class TeacherController implements Initializable {
                 return;
             }
         }
-
         // 3. 正确答案（由 RadioButton userData 决定）
         Toggle selected = optionsToggleGroup.getSelectedToggle();
         if (selected == null) {
@@ -323,6 +387,7 @@ public class TeacherController implements Initializable {
             teacherNameLabel.setText("账号：" + username);
         }
         loadQuestions();
+        loadStudents();
         if (mainTabPane != null) {
             mainTabPane.getSelectionModel().selectFirst();
         }
@@ -345,5 +410,101 @@ public class TeacherController implements Initializable {
         public String getContent() {
             return content;
         }
+    }
+
+    /** 学生表格数据结构 */
+    public static class Student {
+        private final long userId;
+        private final String username;
+        private final String email;
+        private final String phone;
+        private final String createdAt;
+
+        public Student(long userId, String username, String email, String phone, String createdAt) {
+            this.userId = userId;
+            this.username = username;
+            this.email = email;
+            this.phone = phone;
+            this.createdAt = createdAt;
+        }
+
+        public long getUserId() { return userId; }
+        public String getUsername() { return username; }
+        public String getEmail() { return email; }
+        public String getPhone() { return phone; }
+        public String getCreatedAt() { return createdAt; }
+    }
+
+    /** 顶部按钮点击 */
+    @FXML
+    private void handleTopRightButton(ActionEvent event) {
+        showAlert(Alert.AlertType.INFORMATION, "功能待实现");
+    }
+
+    /** 显示编辑学生对话框 */
+    private void showEditStudentDialog(Student s) {
+        javafx.scene.control.TextField nameField = new javafx.scene.control.TextField(s.getUsername());
+        javafx.scene.control.TextField emailField = new javafx.scene.control.TextField(s.getEmail());
+        javafx.scene.control.TextField phoneField = new javafx.scene.control.TextField(s.getPhone());
+        javafx.scene.control.Button saveBtn = new javafx.scene.control.Button("保存");
+        javafx.scene.control.Button cancelBtn = new javafx.scene.control.Button("取消");
+        javafx.scene.layout.HBox btnBox = new javafx.scene.layout.HBox(10, saveBtn, cancelBtn);
+        btnBox.setAlignment(javafx.geometry.Pos.CENTER);
+        javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(10,
+                new javafx.scene.control.Label("编辑学生信息"),
+                nameField, emailField, phoneField, btnBox);
+        root.setAlignment(javafx.geometry.Pos.CENTER);
+        root.setId("registerForm");
+        javafx.scene.Scene scene = new javafx.scene.Scene(root, 300, 250);
+        scene.getStylesheets().add(getClass().getResource("auth.css").toExternalForm());
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.setTitle("编辑学生");
+        dialog.setScene(scene);
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+        saveBtn.setOnAction(e -> {
+            String name = nameField.getText().trim();
+            String email = emailField.getText().trim();
+            String phone = phoneField.getText().trim();
+            String sql = "UPDATE users SET username=?, email=?, phone=? WHERE user_id=?";
+            try (Connection conn = DBUtil.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, name);
+                ps.setString(2, email);
+                ps.setString(3, phone);
+                ps.setLong(4, s.getUserId());
+                ps.executeUpdate();
+                showAlert(Alert.AlertType.INFORMATION, "修改成功");
+                dialog.close();
+                loadStudents();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "修改失败：" + ex.getMessage());
+            }
+        });
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        dialog.showAndWait();
+    }
+
+    /** 删除确认 */
+    private void showDeleteStudentDialog(Student s) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION,
+                "确认删除该学生？", javafx.scene.control.ButtonType.OK, javafx.scene.control.ButtonType.CANCEL);
+        alert.showAndWait().ifPresent(bt -> {
+            if (bt == javafx.scene.control.ButtonType.OK) {
+                String sql = "DELETE FROM users WHERE user_id=?";
+                try (Connection conn = DBUtil.getConnection();
+                     PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setLong(1, s.getUserId());
+                    ps.executeUpdate();
+                    showAlert(Alert.AlertType.INFORMATION, "删除成功");
+                    loadStudents();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    showAlert(Alert.AlertType.ERROR, "删除失败：" + ex.getMessage());
+                }
+            }
+        });
     }
 }

@@ -10,6 +10,7 @@
     <top>
         <HBox id="topBar" alignment="CENTER_RIGHT" spacing="10">
             <Label fx:id="teacherNameLabel" text="" />
+            <Button text="设置" onAction="#handleTopRightButton" />
         </HBox>
     </top>
 
