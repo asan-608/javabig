@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10" alignment="center" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.javabig.LoginController">
+    <GridPane hgap="10" vgap="10">
+        <Label text="用户名：" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="usernameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="密码：" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <PasswordField fx:id="passwordField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <HBox spacing="20">
+        <Button text="登录" onAction="#handleLoginButtonAction"/>
+        <Button text="注册" onAction="#handleShowRegisterAction"/>
+    </HBox>
+</VBox>
