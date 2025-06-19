@@ -1,10 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
 <VBox xmlns="http://javafx.com/javafx/17.0.1"
       xmlns:fx="http://javafx.com/fxml/1"
-      alignment="CENTER" spacing="20">
-    <Label text="欢迎来到主界面" style="-fx-font-size: 24px;"/>
+      fx:controller="com.example.javabig.MainController"
+      alignment="CENTER" spacing="10" prefWidth="600" prefHeight="400">
+    <fx:define>
+        <ToggleGroup fx:id="optionsGroup"/>
+    </fx:define>
+
+    <Label fx:id="questionLabel" wrapText="true" style="-fx-font-size: 16px;"/>
+
+    <VBox spacing="5">
+        <RadioButton fx:id="optionARadio" toggleGroup="$optionsGroup" userData="A"/>
+        <RadioButton fx:id="optionBRadio" toggleGroup="$optionsGroup" userData="B"/>
+        <RadioButton fx:id="optionCRadio" toggleGroup="$optionsGroup" userData="C"/>
+        <RadioButton fx:id="optionDRadio" toggleGroup="$optionsGroup" userData="D"/>
+    </VBox>
+
+    <HBox spacing="10">
+        <Button fx:id="startButton" text="开始测试" onAction="#handleStartTest"/>
+        <Button fx:id="submitButton" text="提交答案" onAction="#handleSubmitAnswer" disable="true"/>
+    </HBox>
+
+    <Label fx:id="statusLabel"/>
 </VBox>
