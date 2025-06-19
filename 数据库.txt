@@ -1,0 +1,107 @@
+-- 1. 用户表
+CREATE TABLE users (
+  user_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('admin','user') NOT NULL DEFAULT 'user',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2. 题型表（单选/多选/填空/判断）
+CREATE TABLE question_types (
+  type_id INT PRIMARY KEY AUTO_INCREMENT,
+  code VARCHAR(20) NOT NULL UNIQUE,      -- e.g. 'single_choice','multiple_choice','fill_blank','true_false'
+  name VARCHAR(20) NOT NULL              -- e.g. '单选题','多选题','填空题','判断题'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3. 难度等级表
+CREATE TABLE difficulty_levels (
+  difficulty_id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(20) NOT NULL,            -- e.g. '简单','中等','困难'
+  description VARCHAR(100)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 4. 题库表（含题型、难度、解释、创建者）
+CREATE TABLE questions (
+  question_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  content TEXT NOT NULL,                -- 题干
+  type_id INT NOT NULL DEFAULT 1,       -- 题型
+  difficulty_id INT NOT NULL DEFAULT 1, -- 难度等级
+  correct_answer TEXT,                  -- 对于填空/判断可直接写答案；单/多选也可重复存放
+  explanation TEXT,                     -- 答案解析
+  created_by BIGINT NOT NULL,           -- 管理员出题者
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (type_id) REFERENCES question_types(type_id),
+  FOREIGN KEY (difficulty_id) REFERENCES difficulty_levels(difficulty_id),
+  FOREIGN KEY (created_by) REFERENCES users(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 5. 题目选项表（单选/多选题专用）
+CREATE TABLE question_options (
+  option_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  question_id BIGINT NOT NULL,
+  content TEXT NOT NULL,          -- 选项文本
+  is_correct BOOLEAN NOT NULL DEFAULT FALSE,
+  sequence INT NOT NULL DEFAULT 0, -- 显示顺序
+  FOREIGN KEY (question_id) REFERENCES questions(question_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 6. 测验会话表
+CREATE TABLE test_sessions (
+  session_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  start_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  end_time DATETIME,
+  total_score INT DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 7. 会话-题目关联表
+CREATE TABLE session_questions (
+  session_q_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  session_id BIGINT NOT NULL,
+  question_id BIGINT NOT NULL,
+  sequence INT NOT NULL DEFAULT 0,    -- 出题顺序
+  user_answer TEXT,                   -- 用户提交答案（JSON 数组/文本等）
+  is_correct BOOLEAN,
+  FOREIGN KEY (session_id) REFERENCES test_sessions(session_id),
+  FOREIGN KEY (question_id) REFERENCES questions(question_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 8. 错题本表
+CREATE TABLE wrong_questions (
+  wrong_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  question_id BIGINT NOT NULL,
+  first_wrong_at DATETIME NOT NULL,
+  last_wrong_at DATETIME NOT NULL,
+  wrong_count INT NOT NULL DEFAULT 1,
+  FOREIGN KEY (user_id) REFERENCES users(user_id),
+  FOREIGN KEY (question_id) REFERENCES questions(question_id),
+  UNIQUE KEY ux_user_question (user_id, question_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 9. 复习安排表
+CREATE TABLE review_schedule (
+  schedule_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  wrong_id BIGINT NOT NULL,
+  next_review_at DATETIME NOT NULL,
+  interval_days INT NOT NULL DEFAULT 1,
+  e_factor FLOAT NOT NULL DEFAULT 2.5,   -- SRS 记忆因子
+  FOREIGN KEY (wrong_id) REFERENCES wrong_questions(wrong_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 10. 排行榜视图（可选，实时查询）
+CREATE VIEW leaderboard AS
+SELECT 
+  u.user_id, 
+  u.username,
+  COUNT(s.session_id) AS tests_taken,
+  SUM(s.total_score)    AS total_score,
+  ROUND(AVG(s.total_score),2) AS avg_score
+FROM users u
+LEFT JOIN test_sessions s ON u.user_id = s.user_id
+GROUP BY u.user_id, u.username
+ORDER BY total_score DESC;
