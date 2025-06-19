@@ -9,6 +9,8 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+import com.example.javabig.TeacherController;
+
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,6 +38,7 @@ public class LoginController {
             ps.setString(2, hash);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
+                    long userId = rs.getLong("user_id");
                     String role = rs.getString("role");
                     alert(Alert.AlertType.INFORMATION, "登录成功，欢迎 " + user + "！");
 
@@ -44,7 +47,10 @@ public class LoginController {
                     Parent root;
                     if ("admin".equals(role)) {
                         // 教师窗口
-                        root = FXMLLoader.load(getClass().getResource("teacher-view.fxml"));
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("teacher-view.fxml"));
+                        root = loader.load();
+                        TeacherController controller = loader.getController();
+                        controller.setCurrentTeacherId(userId);
                     } else {
                         // 其他角色主界面（示例为 main-view.fxml）
                         root = FXMLLoader.load(getClass().getResource("main-view.fxml"));
