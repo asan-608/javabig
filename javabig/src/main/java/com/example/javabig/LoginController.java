@@ -50,7 +50,7 @@ public class LoginController {
                         FXMLLoader loader = new FXMLLoader(getClass().getResource("teacher-view.fxml"));
                         root = loader.load();
                         TeacherController controller = loader.getController();
-                        controller.setCurrentTeacherId(userId);
+                        controller.setTeacherInfo(userId, user);
                     } else {
                         // 其他角色主界面（示例为 main-view.fxml）
                         root = FXMLLoader.load(getClass().getResource("main-view.fxml"));

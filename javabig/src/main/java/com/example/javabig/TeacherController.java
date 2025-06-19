@@ -47,9 +47,11 @@ public class TeacherController implements Initializable {
     @FXML private TableView<Question> questionTable;
     @FXML private TableColumn<Question, Long> idColumn;
     @FXML private TableColumn<Question, String> contentColumn;
+    @FXML private javafx.scene.control.Label teacherNameLabel;
 
     // 当前教师（管理员）ID，需要在登录时赋值
     private long currentTeacherId = 0L;
+    private String currentTeacherName = "";
 
     // 编辑状态下的题目 ID，0 表示新建
     private long editingQuestionId = 0L;
@@ -313,10 +315,17 @@ public class TeacherController implements Initializable {
         alert.showAndWait();
     }
 
-    /** 登录后需由外部设置当前教师 ID */
-    public void setCurrentTeacherId(long teacherId) {
+    /** 登录后由外部设置当前教师信息 */
+    public void setTeacherInfo(long teacherId, String username) {
         this.currentTeacherId = teacherId;
+        this.currentTeacherName = username;
+        if (teacherNameLabel != null) {
+            teacherNameLabel.setText("账号：" + username);
+        }
         loadQuestions();
+        if (mainTabPane != null) {
+            mainTabPane.getSelectionModel().selectFirst();
+        }
     }
 
     /** 表格行的数据结构 */

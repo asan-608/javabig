@@ -2,35 +2,30 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx/17"
+<BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.example.javabig.TeacherController">
+            fx:controller="com.example.javabig.TeacherController"
+            stylesheets="@teacher-view.css">
 
-    <!-- 在根节点下统一定义 ToggleGroup -->
-    <fx:define>
-        <ToggleGroup fx:id="optionsToggleGroup"/>
-    </fx:define>
+    <top>
+        <HBox id="topBar" alignment="CENTER_RIGHT" spacing="10">
+            <Label fx:id="teacherNameLabel" text="" />
+        </HBox>
+    </top>
 
-    <!-- 主 TabPane -->
-    <children>
-        <TabPane fx:id="mainTabPane"
-                 prefWidth="800"
-                 prefHeight="600"
-                 AnchorPane.topAnchor="0"
-                 AnchorPane.leftAnchor="0"
-                 AnchorPane.rightAnchor="0"
-                 AnchorPane.bottomAnchor="0">
+    <center>
+        <TabPane fx:id="mainTabPane" side="LEFT" tabMinWidth="100" tabMinHeight="40">
             <tabs>
+                <Tab text="系统首页">
+                    <AnchorPane>
+                        <Label text="欢迎进入系统首页" AnchorPane.leftAnchor="20" AnchorPane.topAnchor="20" />
+                    </AnchorPane>
+                </Tab>
 
-                <!-- 题库管理：显示已添加的题目并支持编辑、删除 -->
-                <Tab text="题库管理">
+                <Tab text="题库信息">
                     <AnchorPane>
                         <children>
-                            <VBox spacing="10"
-                                  AnchorPane.topAnchor="10"
-                                  AnchorPane.leftAnchor="10"
-                                  AnchorPane.rightAnchor="10"
-                                  AnchorPane.bottomAnchor="10">
+                            <VBox spacing="10" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="10">
                                 <TableView fx:id="questionTable" prefHeight="400">
                                     <columns>
                                         <TableColumn fx:id="idColumn" text="ID" prefWidth="70" />
@@ -46,75 +41,58 @@
                     </AnchorPane>
                 </Tab>
 
-                <!-- 添加选择题 -->
-                <Tab fx:id="addChoiceTab" text="添加选择题">
+                <Tab fx:id="addChoiceTab" text="试题新增">
                     <AnchorPane>
                         <children>
-                            <VBox spacing="10"
-                                  AnchorPane.topAnchor="10"
-                                  AnchorPane.leftAnchor="10"
-                                  AnchorPane.rightAnchor="10"
-                                  AnchorPane.bottomAnchor="10">
-
-                                <!-- 题干 -->
+                            <VBox spacing="10" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="10">
                                 <Label text="题干：" />
-                                <TextArea fx:id="questionContentArea"
-                                          prefRowCount="4"
-                                          promptText="请输入题干"/>
+                                <TextArea fx:id="questionContentArea" prefRowCount="4" promptText="请输入题干" />
 
-                                <!-- 选项 A–D -->
                                 <Label text="选项：" />
                                 <HBox spacing="20">
-
                                     <VBox spacing="5">
-                                        <RadioButton fx:id="optionARadio"
-                                                     toggleGroup="$optionsToggleGroup"
-                                                     userData="0"
-                                                     text="A"/>
-                                        <TextField fx:id="optionATextField"
-                                                   promptText="选项 A"/>
+                                        <RadioButton fx:id="optionARadio" toggleGroup="$optionsToggleGroup" userData="0" text="A" />
+                                        <TextField fx:id="optionATextField" promptText="选项 A" />
                                     </VBox>
                                     <VBox spacing="5">
-                                        <RadioButton fx:id="optionBRadio"
-                                                     toggleGroup="$optionsToggleGroup"
-                                                     userData="1"
-                                                     text="B"/>
-                                        <TextField fx:id="optionBTextField"
-                                                   promptText="选项 B"/>
+                                        <RadioButton fx:id="optionBRadio" toggleGroup="$optionsToggleGroup" userData="1" text="B" />
+                                        <TextField fx:id="optionBTextField" promptText="选项 B" />
                                     </VBox>
                                     <VBox spacing="5">
-                                        <RadioButton fx:id="optionCRadio"
-                                                     toggleGroup="$optionsToggleGroup"
-                                                     userData="2"
-                                                     text="C"/>
-                                        <TextField fx:id="optionCTextField"
-                                                   promptText="选项 C"/>
+                                        <RadioButton fx:id="optionCRadio" toggleGroup="$optionsToggleGroup" userData="2" text="C" />
+                                        <TextField fx:id="optionCTextField" promptText="选项 C" />
                                     </VBox>
                                     <VBox spacing="5">
-                                        <RadioButton fx:id="optionDRadio"
-                                                     toggleGroup="$optionsToggleGroup"
-                                                     userData="3"
-                                                     text="D"/>
-                                        <TextField fx:id="optionDTextField"
-                                                   promptText="选项 D"/>
+                                        <RadioButton fx:id="optionDRadio" toggleGroup="$optionsToggleGroup" userData="3" text="D" />
+                                        <TextField fx:id="optionDTextField" promptText="选项 D" />
                                     </VBox>
                                 </HBox>
 
-                                <!-- 难度 -->
                                 <Label text="难度：" />
-                                <ChoiceBox fx:id="difficultyChoiceBox"/>
+                                <ChoiceBox fx:id="difficultyChoiceBox" />
 
-                                <!-- 提交 -->
-                                <Button text="添加"
-                                        onAction="#handleAddChoiceQuestion"
-                                        maxWidth="100"/>
+                                <Button text="添加" onAction="#handleAddChoiceQuestion" maxWidth="100" />
                             </VBox>
                         </children>
                     </AnchorPane>
                 </Tab>
 
-                <!-- 未来可继续添加：多选题/填空题/判断题等 -->
+                <Tab text="学生管理">
+                    <AnchorPane>
+                        <Label text="学生管理功能待实现" AnchorPane.leftAnchor="20" AnchorPane.topAnchor="20" />
+                    </AnchorPane>
+                </Tab>
+
+                <Tab text="试卷管理">
+                    <AnchorPane>
+                        <Label text="试卷管理功能待实现" AnchorPane.leftAnchor="20" AnchorPane.topAnchor="20" />
+                    </AnchorPane>
+                </Tab>
             </tabs>
         </TabPane>
-    </children>
-</AnchorPane>
+    </center>
+
+    <fx:define>
+        <ToggleGroup fx:id="optionsToggleGroup" />
+    </fx:define>
+</BorderPane>

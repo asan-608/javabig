@@ -1,0 +1,19 @@
+#topBar {
+    -fx-background-color: #336699;
+    -fx-padding: 8;
+}
+
+#teacherNameLabel {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.tab-pane {
+    -fx-background-color: #ffffff;
+}
+
+.button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+}
