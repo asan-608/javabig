@@ -22,13 +22,26 @@
                  AnchorPane.bottomAnchor="0">
             <tabs>
 
-                <!-- 题库管理（占位，后续可放题目列表、搜索等） -->
+                <!-- 题库管理：显示已添加的题目并支持编辑、删除 -->
                 <Tab text="题库管理">
                     <AnchorPane>
                         <children>
-                            <Label text="这里显示已有题目列表，支持编辑/删除"
-                                   AnchorPane.topAnchor="10"
-                                   AnchorPane.leftAnchor="10"/>
+                            <VBox spacing="10"
+                                  AnchorPane.topAnchor="10"
+                                  AnchorPane.leftAnchor="10"
+                                  AnchorPane.rightAnchor="10"
+                                  AnchorPane.bottomAnchor="10">
+                                <TableView fx:id="questionTable" prefHeight="400">
+                                    <columns>
+                                        <TableColumn fx:id="idColumn" text="ID" prefWidth="70" />
+                                        <TableColumn fx:id="contentColumn" text="题干" prefWidth="500" />
+                                    </columns>
+                                </TableView>
+                                <HBox spacing="10">
+                                    <Button text="编辑" onAction="#handleEditQuestion" />
+                                    <Button text="删除" onAction="#handleDeleteQuestion" />
+                                </HBox>
+                            </VBox>
                         </children>
                     </AnchorPane>
                 </Tab>
