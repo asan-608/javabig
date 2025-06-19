@@ -7,6 +7,10 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
@@ -16,8 +20,8 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -37,8 +41,18 @@ public class TeacherController implements Initializable {
     @FXML private TextField optionDTextField;
     @FXML private ChoiceBox<String> difficultyChoiceBox;
 
+    // 题库管理相关控件
+    @FXML private TabPane mainTabPane;
+    @FXML private Tab addChoiceTab;
+    @FXML private TableView<Question> questionTable;
+    @FXML private TableColumn<Question, Long> idColumn;
+    @FXML private TableColumn<Question, String> contentColumn;
+
     // 当前教师（管理员）ID，需要在登录时赋值
     private long currentTeacherId = 0L;
+
+    // 编辑状态下的题目 ID，0 表示新建
+    private long editingQuestionId = 0L;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -47,8 +61,35 @@ public class TeacherController implements Initializable {
             FXCollections.observableArrayList("简单", "中等", "困难")
         );
         difficultyChoiceBox.setValue("简单");
+
+        // 表格列绑定
+        if (idColumn != null) {
+            idColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("questionId"));
+        }
+        if (contentColumn != null) {
+            contentColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("content"));
+        }
     }
 
+    /** 加载当前教师的题库到表格 */
+    private void loadQuestions() {
+        if (questionTable == null) {
+            return;
+        }
+        questionTable.getItems().clear();
+        String sql = "SELECT question_id, content FROM questions WHERE created_by=?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, currentTeacherId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    questionTable.getItems().add(new Question(rs.getLong(1), rs.getString(2)));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
     /**
      * 点击“添加”按钮时调用，负责收集表单、校验并写库
      */
@@ -102,7 +143,7 @@ public class TeacherController implements Initializable {
         // 5. 题型 ID：单选题假设为 1
         final int SINGLE_CHOICE_TYPE_ID = 1;
 
-        // 6. SQL 语句
+        // SQL 语句
         String insertQuestionSql = """
             INSERT INTO questions
               (content, type_id, difficulty_id, correct_answer, explanation, created_by)
@@ -114,27 +155,45 @@ public class TeacherController implements Initializable {
             VALUES (?, ?, ?, ?)
             """;
 
-        // 7. 数据库写入
+        String updateQuestionSql = """
+            UPDATE questions
+               SET content=?, difficulty_id=?, correct_answer=?
+             WHERE question_id=?
+            """;
+        String deleteOptionsSql = "DELETE FROM question_options WHERE question_id=?";
+
+        // 数据库写入
         try (Connection conn = DBUtil.getConnection()) {
             conn.setAutoCommit(false);
-
-            // 插入 questions，获取自增主键
-            long questionId;
-            try (PreparedStatement ps = conn.prepareStatement(
-                    insertQuestionSql, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setString(1, content);
-                ps.setInt(2, SINGLE_CHOICE_TYPE_ID);
-                ps.setInt(3, difficultyId);
-                ps.setString(4, correctAnswer);
-                ps.setString(5, "");  // 解析暂留空
-                ps.setLong(6, currentTeacherId);
-                ps.executeUpdate();
-                ResultSet rs = ps.getGeneratedKeys();
-                rs.next();
-                questionId = rs.getLong(1);
+            long questionId = editingQuestionId;
+            if (editingQuestionId == 0) {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        insertQuestionSql, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, content);
+                    ps.setInt(2, SINGLE_CHOICE_TYPE_ID);
+                    ps.setInt(3, difficultyId);
+                    ps.setString(4, correctAnswer);
+                    ps.setString(5, "");
+                    ps.setLong(6, currentTeacherId);
+                    ps.executeUpdate();
+                    ResultSet rs = ps.getGeneratedKeys();
+                    rs.next();
+                    questionId = rs.getLong(1);
+                }
+            } else {
+                try (PreparedStatement ps = conn.prepareStatement(updateQuestionSql)) {
+                    ps.setString(1, content);
+                    ps.setInt(2, difficultyId);
+                    ps.setString(3, correctAnswer);
+                    ps.setLong(4, editingQuestionId);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(deleteOptionsSql)) {
+                    ps.setLong(1, editingQuestionId);
+                    ps.executeUpdate();
+                }
             }
 
-            // 插入四个选项
             try (PreparedStatement psOpt = conn.prepareStatement(insertOptionSql)) {
                 for (int i = 0; i < options.size(); i++) {
                     psOpt.setLong(1, questionId);
@@ -147,12 +206,90 @@ public class TeacherController implements Initializable {
             }
 
             conn.commit();
-            showAlert(Alert.AlertType.INFORMATION, "单选题添加成功！");
+            if (editingQuestionId == 0) {
+                showAlert(Alert.AlertType.INFORMATION, "单选题添加成功！");
+            } else {
+                showAlert(Alert.AlertType.INFORMATION, "修改成功！");
+            }
+            editingQuestionId = 0L;
             clearFormFields();
+            loadQuestions();
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "添加失败：" + e.getMessage());
         }
+    }
+
+    /** 点击删除按钮 */
+    @FXML
+    private void handleDeleteQuestion(ActionEvent event) {
+        Question selected = questionTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert(Alert.AlertType.WARNING, "请先选择题目");
+            return;
+        }
+        String sql1 = "DELETE FROM question_options WHERE question_id=?";
+        String sql2 = "DELETE FROM questions WHERE question_id=?";
+        try (Connection conn = DBUtil.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement ps = conn.prepareStatement(sql1)) {
+                ps.setLong(1, selected.getQuestionId());
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = conn.prepareStatement(sql2)) {
+                ps.setLong(1, selected.getQuestionId());
+                ps.executeUpdate();
+            }
+            conn.commit();
+            loadQuestions();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "删除失败：" + e.getMessage());
+        }
+    }
+
+    /** 点击编辑按钮，将所选题目填入表单 */
+    @FXML
+    private void handleEditQuestion(ActionEvent event) {
+        Question selected = questionTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert(Alert.AlertType.WARNING, "请先选择题目");
+            return;
+        }
+        String sqlQ = "SELECT content, difficulty_id, correct_answer FROM questions WHERE question_id=?";
+        String sqlOpt = "SELECT content, is_correct FROM question_options WHERE question_id=? ORDER BY sequence";
+        try (Connection conn = DBUtil.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(sqlQ)) {
+                ps.setLong(1, selected.getQuestionId());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        questionContentArea.setText(rs.getString(1));
+                        int diffId = rs.getInt(2);
+                        difficultyChoiceBox.setValue(diffId == 2 ? "中等" : (diffId == 3 ? "困难" : "简单"));
+                    }
+                }
+            }
+            try (PreparedStatement ps = conn.prepareStatement(sqlOpt)) {
+                ps.setLong(1, selected.getQuestionId());
+                try (ResultSet rs = ps.executeQuery()) {
+                    List<TextField> fields = Arrays.asList(optionATextField, optionBTextField, optionCTextField, optionDTextField);
+                    List<RadioButton> radios = Arrays.asList(optionARadio, optionBRadio, optionCRadio, optionDRadio);
+                    int idx = 0;
+                    while (rs.next() && idx < 4) {
+                        fields.get(idx).setText(rs.getString(1));
+                        boolean correct = rs.getBoolean(2);
+                        radios.get(idx).setSelected(correct);
+                        idx++;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "加载题目失败：" + e.getMessage());
+            return;
+        }
+        editingQuestionId = selected.getQuestionId();
+        mainTabPane.getSelectionModel().select(addChoiceTab);
     }
 
     /** 清空表单，便于下一次输入 */
@@ -179,5 +316,25 @@ public class TeacherController implements Initializable {
     /** 登录后需由外部设置当前教师 ID */
     public void setCurrentTeacherId(long teacherId) {
         this.currentTeacherId = teacherId;
+        loadQuestions();
+    }
+
+    /** 表格行的数据结构 */
+    public static class Question {
+        private final long questionId;
+        private final String content;
+
+        public Question(long id, String content) {
+            this.questionId = id;
+            this.content = content;
+        }
+
+        public long getQuestionId() {
+            return questionId;
+        }
+
+        public String getContent() {
+            return content;
+        }
     }
 }
