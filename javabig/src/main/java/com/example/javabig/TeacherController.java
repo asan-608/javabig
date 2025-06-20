@@ -22,7 +22,7 @@ import com.kennycason.kumo.WordCloud;
 import com.kennycason.kumo.bg.RectangleBackground;
 import com.kennycason.kumo.palette.ColorPalette;
 import com.kennycason.kumo.font.scale.SqrtFontScalar;
-import com.kennycason.kumo.collide.CollisionMode;
+import com.kennycason.kumo.CollisionMode;
 import com.kennycason.kumo.nlp.FrequencyAnalyzer;
 import com.kennycason.kumo.wordstart.CenterWordStart;
 import com.kennycason.kumo.WordFrequency;
