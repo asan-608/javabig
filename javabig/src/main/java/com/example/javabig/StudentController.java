@@ -8,8 +8,28 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.PieChart;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import javafx.concurrent.Task;
+import javafx.embed.swing.SwingFXUtils;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
+import com.kennycason.kumo.WordCloud;
+import com.kennycason.kumo.bg.RectangleBackground;
+import com.kennycason.kumo.palette.ColorPalette;
+import com.kennycason.kumo.font.scale.SqrtFontScalar;
+import com.kennycason.kumo.font.KumoFont;
+import com.kennycason.kumo.CollisionMode;
+import com.kennycason.kumo.nlp.FrequencyAnalyzer;
+import com.kennycason.kumo.wordstart.CenterWordStart;
+import com.kennycason.kumo.WordFrequency;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -43,6 +63,10 @@ public class StudentController implements Initializable {
     @FXML private Label infoEmailLabel;
     @FXML private Label infoPhoneLabel;
     @FXML private Label infoCreatedLabel;
+    @FXML private LineChart<String, Number> scoreLineChart;
+    @FXML private ImageView wordCloudView;
+    @FXML private PieChart typePieChart;
+    @FXML private BarChart<String, Number> scoreBarChart;
 
     private static final String AI_API_KEY = "sk-dbhV140jGebFvQbT2B2KxfnEzZdrzQRmaYoxzMgVcErTXACh";
     private static final String AI_API_URL = "https://xiaoai.plus/v1/chat/completions";
@@ -88,6 +112,10 @@ public class StudentController implements Initializable {
         }
         loadExamPapers();
         loadScores();
+        loadWordCloud();
+        loadQuestionTypeStats();
+        loadScoreTrend();
+        loadScoreDistribution();
     }
 
     private void loadExamPapers() {
@@ -152,6 +180,93 @@ public class StudentController implements Initializable {
         }
     }
 
+    private void loadScoreTrend() {
+        if (scoreLineChart == null) return;
+        scoreLineChart.getData().clear();
+        javafx.scene.chart.XYChart.Series<String, Number> series = new javafx.scene.chart.XYChart.Series<>();
+        String sql = "SELECT taken_at, score FROM exam_results WHERE user_id=? ORDER BY taken_at";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, currentUserId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    series.getData().add(new javafx.scene.chart.XYChart.Data<>(rs.getString(1), rs.getInt(2)));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        scoreLineChart.getData().add(series);
+    }
+
+    private void loadQuestionTypeStats() {
+        if (typePieChart == null) return;
+        typePieChart.getData().clear();
+        String sql = "SELECT qt.name, COUNT(*) FROM questions q JOIN question_types qt ON q.type_id=qt.type_id GROUP BY qt.name";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                typePieChart.getData().add(new PieChart.Data(rs.getString(1), rs.getInt(2)));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadScoreDistribution() {
+        if (scoreBarChart == null) return;
+        scoreBarChart.getData().clear();
+        javafx.scene.chart.XYChart.Series<String, Number> series = new javafx.scene.chart.XYChart.Series<>();
+        String sql = "SELECT p.title, AVG(er.score) FROM exam_papers p LEFT JOIN exam_results er ON p.paper_id=er.paper_id GROUP BY p.paper_id, p.title";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                series.getData().add(new javafx.scene.chart.XYChart.Data<>(rs.getString(1), rs.getDouble(2)));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        scoreBarChart.getData().add(series);
+    }
+
+    private void loadWordCloud() {
+        if (wordCloudView == null) return;
+        String sql = "SELECT content FROM questions";
+        java.util.List<String> texts = new java.util.ArrayList<>();
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                texts.add(rs.getString(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        FrequencyAnalyzer analyzer = new FrequencyAnalyzer();
+        java.util.List<WordFrequency> wordFrequencies = analyzer.load(texts);
+        Dimension dimension = new Dimension(600, 400);
+        WordCloud wordCloud = new WordCloud(dimension, CollisionMode.PIXEL_PERFECT);
+        try (InputStream fontStream = getClass().getResourceAsStream("/fonts/NotoSansSC-Regular.otf")) {
+            if (fontStream != null) {
+                wordCloud.setKumoFont(new KumoFont(fontStream));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        wordCloud.setPadding(2);
+        wordCloud.setBackground(new RectangleBackground(dimension));
+        wordCloud.setFontScalar(new SqrtFontScalar(10, 40));
+        wordCloud.setBackgroundColor(new Color(255,255,255,0));
+        wordCloud.setColorPalette(new ColorPalette(new Color(64,69,241), new Color(64,141,241), new Color(0x408DF1), new Color(0x40A7F1)));
+        wordCloud.setWordStartStrategy(new CenterWordStart());
+        wordCloud.build(wordFrequencies);
+        BufferedImage img = wordCloud.getBufferedImage();
+        javafx.scene.image.Image fxImage = SwingFXUtils.toFXImage(img, null);
+        wordCloudView.setImage(fxImage);
+    }
+
     private void openExamWindow(ExamPaper paper) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("exam-view.fxml"));
@@ -161,7 +276,11 @@ public class StudentController implements Initializable {
             Stage stage = new Stage();
             stage.setTitle(paper.getTitle());
             stage.setScene(new Scene(root, 600, 450));
-            stage.setOnHiding(e -> loadScores());
+            stage.setOnHiding(e -> {
+                loadScores();
+                loadScoreTrend();
+                loadScoreDistribution();
+            });
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();
@@ -176,6 +295,10 @@ public class StudentController implements Initializable {
         }
         loadScores();
         loadProfile();
+        loadScoreTrend();
+        loadWordCloud();
+        loadQuestionTypeStats();
+        loadScoreDistribution();
     }
 
     @FXML

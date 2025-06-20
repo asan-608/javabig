@@ -16,6 +16,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.PieChart;
 import javafx.embed.swing.SwingFXUtils;
 
 import com.kennycason.kumo.WordCloud;
@@ -68,6 +73,9 @@ public class TeacherController implements Initializable {
     @FXML private javafx.scene.control.Label teacherNameLabel;
     @FXML private javafx.scene.control.Button topRightButton;
     @FXML private ImageView wordCloudView;
+    @FXML private LineChart<String, Number> paperScoreLineChart;
+    @FXML private PieChart typePieChart;
+    @FXML private BarChart<String, Number> scoreBarChart;
 
     // 题型管理相关控件
     @FXML private Tab typeManageTab;
@@ -216,6 +224,10 @@ public class TeacherController implements Initializable {
 
         loadQuestionTypes();
         loadExamPapers();
+        loadWordCloud();
+        loadQuestionTypeStats();
+        loadPaperScoreTrend();
+        loadScoreDistribution();
     }
 
     /** 加载当前教师的题库到表格 */
@@ -346,6 +358,55 @@ public class TeacherController implements Initializable {
         BufferedImage img = wordCloud.getBufferedImage();
         javafx.scene.image.Image fxImage = SwingFXUtils.toFXImage(img, null);
         wordCloudView.setImage(fxImage);
+    }
+
+    private void loadPaperScoreTrend() {
+        if (paperScoreLineChart == null) return;
+        paperScoreLineChart.getData().clear();
+        javafx.scene.chart.XYChart.Series<String, Number> series = new javafx.scene.chart.XYChart.Series<>();
+        String sql = "SELECT p.created_at, AVG(er.score) FROM exam_papers p LEFT JOIN exam_results er ON p.paper_id=er.paper_id GROUP BY p.paper_id, p.created_at ORDER BY p.created_at";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                series.getData().add(new javafx.scene.chart.XYChart.Data<>(rs.getString(1), rs.getDouble(2)));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        paperScoreLineChart.getData().add(series);
+    }
+
+    private void loadQuestionTypeStats() {
+        if (typePieChart == null) return;
+        typePieChart.getData().clear();
+        String sql = "SELECT qt.name, COUNT(*) FROM questions q JOIN question_types qt ON q.type_id=qt.type_id GROUP BY qt.name";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                typePieChart.getData().add(new PieChart.Data(rs.getString(1), rs.getInt(2)));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadScoreDistribution() {
+        if (scoreBarChart == null) return;
+        scoreBarChart.getData().clear();
+        javafx.scene.chart.XYChart.Series<String, Number> series = new javafx.scene.chart.XYChart.Series<>();
+        String sql = "SELECT u.username, AVG(er.score) FROM users u LEFT JOIN exam_results er ON u.user_id=er.user_id GROUP BY u.user_id, u.username";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                series.getData().add(new javafx.scene.chart.XYChart.Data<>(rs.getString(1), rs.getDouble(2)));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        scoreBarChart.getData().add(series);
     }
 
     /** 点击新增题型按钮 */
@@ -638,6 +699,9 @@ public class TeacherController implements Initializable {
         loadStudents();
         loadExamPapers();
         loadWordCloud();
+        loadQuestionTypeStats();
+        loadPaperScoreTrend();
+        loadScoreDistribution();
         if (mainTabPane != null) {
             mainTabPane.getSelectionModel().selectFirst();
         }

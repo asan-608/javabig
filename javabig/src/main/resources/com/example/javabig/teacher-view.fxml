@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
+<?import javafx.scene.chart.*?>
 <?import javafx.scene.image.ImageView?>
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml"
@@ -37,12 +37,26 @@
                     </graphic>
                     <content>
                         <AnchorPane>
-                            <ImageView fx:id="wordCloudView"
-                                       AnchorPane.topAnchor="10"
-                                       AnchorPane.leftAnchor="10"
-                                       AnchorPane.rightAnchor="10"
-                                       AnchorPane.bottomAnchor="10"
-                                       preserveRatio="true" />
+                            <VBox spacing="10" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="10">
+                                <ImageView fx:id="wordCloudView" preserveRatio="true" fitHeight="200" />
+                                <LineChart fx:id="paperScoreLineChart" prefHeight="200">
+                                    <xAxis>
+                                        <CategoryAxis label="出题时间" />
+                                    </xAxis>
+                                    <yAxis>
+                                        <NumberAxis label="平均分" />
+                                    </yAxis>
+                                </LineChart>
+                                <PieChart fx:id="typePieChart" prefHeight="200" />
+                                <BarChart fx:id="scoreBarChart" prefHeight="200">
+                                    <xAxis>
+                                        <CategoryAxis label="用户" />
+                                    </xAxis>
+                                    <yAxis>
+                                        <NumberAxis label="平均分" />
+                                    </yAxis>
+                                </BarChart>
+                            </VBox>
                         </AnchorPane>
                     </content>
                 </Tab>
