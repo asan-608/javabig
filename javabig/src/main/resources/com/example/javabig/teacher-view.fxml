@@ -78,8 +78,8 @@
                     </content>
                 </Tab>
 
-                <!-- 试题新增 -->␊
-                <Tab fx:id="addChoiceTab">␊
+                <!-- 试题新增 -->
+                <Tab fx:id="addChoiceTab">
                     <graphic>
                         <Label wrapText="true" textAlignment="CENTER">
                             <text>

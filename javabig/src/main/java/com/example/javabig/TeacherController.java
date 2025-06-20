@@ -629,15 +629,18 @@ public class TeacherController implements Initializable {
         javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(10);
         root.getChildren().addAll(new javafx.scene.control.Label("新增题目 - " + qt.getName()), contentArea);
 
-        java.util.List<javafx.scene.control.TextField> optionFields = java.util.Arrays.asList(
+        java.util.List<javafx.scene.control.TextField> optionFields = new java.util.ArrayList<>(java.util.Arrays.asList(
                 new javafx.scene.control.TextField(),
                 new javafx.scene.control.TextField(),
                 new javafx.scene.control.TextField(),
-                new javafx.scene.control.TextField());
+                new javafx.scene.control.TextField()));
+
+        // Toggle groups declared here for use inside event handlers
+        javafx.scene.control.ToggleGroup tg = new javafx.scene.control.ToggleGroup();
+        javafx.scene.control.ToggleGroup tfGroup = new javafx.scene.control.ToggleGroup();
 
         switch (qt.getCode()) {
             case "single_choice":
-                javafx.scene.control.ToggleGroup tg = new javafx.scene.control.ToggleGroup();
                 javafx.scene.layout.HBox optBox = new javafx.scene.layout.HBox(20);
                 char c1 = 'A';
                 for (int i = 0; i < 4; i++) {
@@ -664,15 +667,15 @@ public class TeacherController implements Initializable {
                 }
                 root.getChildren().addAll(new javafx.scene.control.Label("选项"), optBox2);
                 break;
-            case "fill_blank":
+                case "fill_blank":
+                optionFields.clear();
                 javafx.scene.control.TextField answerField = new javafx.scene.control.TextField();
                 answerField.setPromptText("答案");
-                optionFields = java.util.Collections.singletonList(answerField);
+                optionFields.add(answerField);
                 root.getChildren().add(new javafx.scene.control.Label("答案"));
                 root.getChildren().add(answerField);
                 break;
             case "true_false":
-                javafx.scene.control.ToggleGroup tfGroup = new javafx.scene.control.ToggleGroup();
                 javafx.scene.control.RadioButton trueBtn = new javafx.scene.control.RadioButton("正确");
                 trueBtn.setToggleGroup(tfGroup);
                 trueBtn.setUserData("T");
