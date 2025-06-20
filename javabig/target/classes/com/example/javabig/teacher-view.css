@@ -1,24 +1,47 @@
+/* 顶部工具栏 */
 #topBar {
     -fx-background-color: #336699;
     -fx-padding: 8;
 }
 
+/* 教师姓名标签 */
 #teacherNameLabel {
     -fx-text-fill: white;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
 }
 
+/* 主区域背景 */
 .tab-pane {
     -fx-background-color: #ffffff;
 }
 
+/* 全局按钮样式 */
 .button {
     -fx-background-color: #4CAF50;
     -fx-text-fill: white;
 }
 
-/* 左侧 Tab 文本竖排显示：直接在文本中使用換行符实现 */
-.tab-pane:left .tab-header-area .tab-label {
-    -fx-alignment: center;
+/* 给 TabHeaderArea 加内边距，避免 graphic Label 紧贴边缘 */
+.tab-pane .tab-header-area {
+    -fx-padding: 5px;
+}
+
+/* 
+  针对每个 Tab 的 graphic（多行 Label）强制换行、居中、并限制宽度 
+  — 这里的 30px 你可以根据字体大小和行数调整成合适的值
+*/
+.tab-pane .tab-header-area .tab .graphic > .label {
+    -fx-wrap-text: true;           /* 开启自动换行 */
+    -fx-text-alignment: center;    /* 文本内部居中 */
+    -fx-alignment: center;         /* 节点内容居中 */
+    -fx-pref-width: 30px;          /* graphic Label 的“栏宽” */
+    -fx-padding: 2px 0px;          /* 上下留点空隙 */
+}
+
+/* （可选）如果你想给选中／悬停态下的 Tab 加点视觉反馈 */
+.tab-pane .tab-header-area .tab:selected .graphic > .label,
+.tab-pane .tab-header-area .tab:hover .graphic > .label {
+    -fx-text-fill: #336699;
+    -fx-font-weight: bold;
 }
