@@ -9,6 +9,14 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
+import javafx.concurrent.Task;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.net.URL;
 import java.sql.Connection;
@@ -28,6 +36,11 @@ public class StudentController implements Initializable {
     @FXML private TableView<PaperResult> scoreTable;
     @FXML private TableColumn<PaperResult, String> scorePaperColumn;
     @FXML private TableColumn<PaperResult, String> scoreValueColumn;
+    @FXML private TextArea aiConversationArea;
+    @FXML private TextField aiInputField;
+
+    private static final String AI_API_KEY = "sk-dbhV140jGebFvQbT2B2KxfnEzZdrzQRmaYoxzMgVcErTXACh";
+    private static final String AI_API_URL = "https://xiaoai.plus/v1/chat/completions";
 
     private long currentUserId = 0L;
     private String currentUsername = "";
@@ -138,6 +151,52 @@ public class StudentController implements Initializable {
             studentNameLabel.setText("账号：" + username);
         }
         loadScores();
+    }
+
+    @FXML
+    private void handleSendMessage() {
+        if (aiInputField == null || aiConversationArea == null) return;
+        String text = aiInputField.getText().trim();
+        if (text.isEmpty()) return;
+        aiConversationArea.appendText("我: " + text + "\n");
+        aiInputField.clear();
+
+        Task<String> task = new Task<>() {
+            @Override
+            protected String call() throws Exception {
+                return requestAi(text);
+            }
+        };
+        task.setOnSucceeded(e -> {
+            String reply = task.getValue();
+            if (reply != null) {
+                aiConversationArea.appendText("AI: " + reply + "\n");
+            }
+        });
+        task.setOnFailed(e -> aiConversationArea.appendText("AI 请求失败\n"));
+        new Thread(task).start();
+    }
+
+    private String requestAi(String prompt) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        String escaped = prompt.replace("\"", "\\\"");
+        String json = String.format("{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"user\",\"content\":\"%s\"}]}", escaped);
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(AI_API_URL))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + AI_API_KEY)
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+        JsonObject obj = JsonParser.parseString(resp.body()).getAsJsonObject();
+        JsonArray choices = obj.getAsJsonArray("choices");
+        if (choices != null && choices.size() > 0) {
+            JsonObject msg = choices.get(0).getAsJsonObject().getAsJsonObject("message");
+            if (msg != null && msg.has("content")) {
+                return msg.get("content").getAsString().trim();
+            }
+        }
+        return null;
     }
 
     @FXML

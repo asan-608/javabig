@@ -45,3 +45,25 @@
     -fx-text-fill: #336699;
     -fx-font-weight: bold;
 }
+
+
+/* AI 助教区域 */
+#aiConversationArea {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: #e5e7eb;
+    -fx-padding: 8;
+}
+
+#aiInputField {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 4;
+    -fx-padding: 6 8;
+}
+
+#aiSendButton {
+    -fx-background-color: #4F46E5;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 4;
+    -fx-padding: 6 12;
+}
