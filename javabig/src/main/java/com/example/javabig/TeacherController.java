@@ -22,6 +22,7 @@ import com.kennycason.kumo.WordCloud;
 import com.kennycason.kumo.bg.RectangleBackground;
 import com.kennycason.kumo.palette.ColorPalette;
 import com.kennycason.kumo.font.scale.SqrtFontScalar;
+import com.kennycason.kumo.font.KumoFont;
 import com.kennycason.kumo.CollisionMode;
 import com.kennycason.kumo.nlp.FrequencyAnalyzer;
 import com.kennycason.kumo.wordstart.CenterWordStart;
@@ -29,7 +30,7 @@ import com.kennycason.kumo.WordFrequency;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
-
+import java.io.InputStream;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -328,6 +329,13 @@ public class TeacherController implements Initializable {
         java.util.List<WordFrequency> wordFrequencies = analyzer.load(texts);
         Dimension dimension = new Dimension(600, 400);
         WordCloud wordCloud = new WordCloud(dimension, CollisionMode.PIXEL_PERFECT);
+        try (InputStream fontStream = getClass().getResourceAsStream("/fonts/NotoSansSC-Regular.otf")) {
+            if (fontStream != null) {
+                wordCloud.setKumoFont(new KumoFont(fontStream));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         wordCloud.setPadding(2);
         wordCloud.setBackground(new RectangleBackground(dimension));
         wordCloud.setFontScalar(new SqrtFontScalar(10, 40));
