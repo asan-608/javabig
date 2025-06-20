@@ -88,10 +88,10 @@ public class StudentController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("exam-view.fxml"));
             Parent root = loader.load();
             ExamController controller = loader.getController();
-            controller.setPaperTitle(paper.getTitle());
+            controller.startExam(paper.getPaperId(), paper.getTitle());
             Stage stage = new Stage();
             stage.setTitle(paper.getTitle());
-            stage.setScene(new Scene(root, 400, 300));
+            stage.setScene(new Scene(root, 600, 450));
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();

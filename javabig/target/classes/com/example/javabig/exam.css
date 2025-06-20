@@ -1,0 +1,30 @@
+#examRoot {
+    -fx-padding: 20;
+    -fx-spacing: 15;
+    -fx-background-color: #ffffff;
+}
+
+.paper-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.question-label {
+    -fx-font-size: 16px;
+    -fx-wrap-text: true;
+}
+
+.choice-radio {
+    -fx-padding: 4 0 4 0;
+}
+
+.control-button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-padding: 6 12;
+    -fx-background-radius: 6;
+}
+
+.status-label {
+    -fx-text-fill: #555;
+}

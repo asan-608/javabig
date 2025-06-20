@@ -1,7 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.javabig.ExamController" alignment="CENTER" spacing="10">
-    <Label fx:id="paperTitleLabel" style="-fx-font-size: 18px;" />
-    <Label text="考试界面待实现" />
+<VBox id="examRoot" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.javabig.ExamController"
+      alignment="TOP_CENTER" spacing="15" stylesheets="@exam.css">
+    <fx:define>
+        <ToggleGroup fx:id="optionsGroup"/>
+    </fx:define>
+
+    <Label fx:id="paperTitleLabel" styleClass="paper-title" />
+    <Label fx:id="questionLabel" wrapText="true" styleClass="question-label" />
+
+    <VBox spacing="8">
+        <RadioButton fx:id="optionARadio" toggleGroup="$optionsGroup" userData="A" styleClass="choice-radio" />
+        <RadioButton fx:id="optionBRadio" toggleGroup="$optionsGroup" userData="B" styleClass="choice-radio" />
+        <RadioButton fx:id="optionCRadio" toggleGroup="$optionsGroup" userData="C" styleClass="choice-radio" />
+        <RadioButton fx:id="optionDRadio" toggleGroup="$optionsGroup" userData="D" styleClass="choice-radio" />
+    </VBox>
+
+    <HBox spacing="10">
+        <Button fx:id="submitButton" text="提交答案" onAction="#handleSubmitAnswer" styleClass="control-button" />
+    </HBox>
+
+    <Label fx:id="statusLabel" styleClass="status-label" />
 </VBox>
