@@ -4,23 +4,17 @@
 <VBox id="examRoot" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.example.javabig.ExamController"
       alignment="TOP_CENTER" spacing="15" stylesheets="@exam.css">
-    <fx:define>
-        <ToggleGroup fx:id="optionsGroup"/>
-    </fx:define>
-
     <Label fx:id="paperTitleLabel" styleClass="paper-title" />
     <Label fx:id="questionLabel" wrapText="true" styleClass="question-label" />
 
-    <VBox spacing="8">
-        <RadioButton fx:id="optionARadio" toggleGroup="$optionsGroup" userData="A" styleClass="choice-radio" />
-        <RadioButton fx:id="optionBRadio" toggleGroup="$optionsGroup" userData="B" styleClass="choice-radio" />
-        <RadioButton fx:id="optionCRadio" toggleGroup="$optionsGroup" userData="C" styleClass="choice-radio" />
-        <RadioButton fx:id="optionDRadio" toggleGroup="$optionsGroup" userData="D" styleClass="choice-radio" />
-    </VBox>
+    <VBox fx:id="answerBox" spacing="8" />
 
     <HBox spacing="10">
-        <Button fx:id="submitButton" text="提交答案" onAction="#handleSubmitAnswer" styleClass="control-button" />
+        <Button fx:id="prevButton" text="上一题" onAction="#handlePrevQuestion" />
+        <Button fx:id="nextButton" text="下一题" onAction="#handleNextQuestion" />
     </HBox>
+
+    <Button fx:id="submitButton" text="提交试卷" onAction="#handleSubmitPaper" styleClass="control-button" />
 
     <Label fx:id="statusLabel" styleClass="status-label" />
 </VBox>
