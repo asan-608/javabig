@@ -119,6 +119,7 @@
                                     <columns>
                                         <TableColumn fx:id="scorePaperColumn" text="试卷" prefWidth="200" />
                                         <TableColumn fx:id="scoreValueColumn" text="成绩" prefWidth="100" />
+                                        <TableColumn fx:id="scoreTimeColumn" text="考试时间" prefWidth="150" />
                                     </columns>
                                 </TableView>
                             </VBox>
@@ -136,7 +137,9 @@
                     </graphic>
                     <content>
                         <AnchorPane>
-                            <VBox spacing="10" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10">
+                                                        <VBox id="profileBox" spacing="10" alignment="CENTER"
+                                  AnchorPane.topAnchor="0" AnchorPane.leftAnchor="0"
+                                  AnchorPane.rightAnchor="0" AnchorPane.bottomAnchor="0">
                                 <Label fx:id="infoUsernameLabel" text="用户名:" />
                                 <Label fx:id="infoEmailLabel" text="邮箱:" />
                                 <Label fx:id="infoPhoneLabel" text="手机号:" />

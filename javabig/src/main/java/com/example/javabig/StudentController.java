@@ -57,6 +57,7 @@ public class StudentController implements Initializable {
     @FXML private TableView<PaperResult> scoreTable;
     @FXML private TableColumn<PaperResult, String> scorePaperColumn;
     @FXML private TableColumn<PaperResult, String> scoreValueColumn;
+    @FXML private TableColumn<PaperResult, String> scoreTimeColumn;
     @FXML private TextArea aiConversationArea;
     @FXML private TextField aiInputField;
     @FXML private Label infoUsernameLabel;
@@ -110,6 +111,9 @@ public class StudentController implements Initializable {
         if (scoreValueColumn != null) {
             scoreValueColumn.setCellValueFactory(new PropertyValueFactory<>("score"));
         }
+        if (scoreTimeColumn != null) {
+            scoreTimeColumn.setCellValueFactory(new PropertyValueFactory<>("takenAt"));
+        }
         loadExamPapers();
         loadScores();
         loadWordCloud();
@@ -142,7 +146,7 @@ public class StudentController implements Initializable {
     private void loadScores() {
         if (scoreTable == null) return;
         scoreTable.getItems().clear();
-        String sql = "SELECT p.paper_id, p.title, er.score " +
+        String sql = "SELECT p.paper_id, p.title, er.score, er.taken_at " +
                 "FROM exam_papers p LEFT JOIN exam_results er " +
                 "ON p.paper_id=er.paper_id AND er.user_id=?";
         try (Connection conn = DBUtil.getConnection();
@@ -152,8 +156,10 @@ public class StudentController implements Initializable {
                 while (rs.next()) {
                     Integer s = (Integer) rs.getObject(3);
                     String scoreText = s == null ? "未开始" : String.valueOf(s);
+                    String time = rs.getString(4);
+                    if (time == null) time = "未开始";
                     scoreTable.getItems().add(new PaperResult(
-                            rs.getLong(1), rs.getString(2), scoreText));
+                            rs.getLong(1), rs.getString(2), scoreText, time));
                 }
             }
         } catch (SQLException e) {
@@ -191,6 +197,7 @@ public class StudentController implements Initializable {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     series.getData().add(new javafx.scene.chart.XYChart.Data<>(rs.getString(1), rs.getInt(2)));
+                            // 查询并填充成绩随时间变化的折线图数据
                 }
             }
         } catch (SQLException e) {
@@ -217,6 +224,7 @@ public class StudentController implements Initializable {
     private void loadScoreDistribution() {
         if (scoreBarChart == null) return;
         scoreBarChart.getData().clear();
+                // 统计各试卷的平均分并填充柱状图
         javafx.scene.chart.XYChart.Series<String, Number> series = new javafx.scene.chart.XYChart.Series<>();
         String sql = "SELECT p.title, AVG(er.score) FROM exam_papers p LEFT JOIN exam_results er ON p.paper_id=er.paper_id GROUP BY p.paper_id, p.title";
         try (Connection conn = DBUtil.getConnection();
@@ -530,15 +538,18 @@ public class StudentController implements Initializable {
         private final long paperId;
         private final String title;
         private final String score;
+        private final String takenAt;
 
-        public PaperResult(long paperId, String title, String score) {
+        public PaperResult(long paperId, String title, String score, String takenAt) {
             this.paperId = paperId;
             this.title = title;
             this.score = score;
+            this.takenAt = takenAt;
         }
 
         public long getPaperId() { return paperId; }
         public String getTitle() { return title; }
         public String getScore() { return score; }
+        public String getTakenAt() { return takenAt; }
     }
 }

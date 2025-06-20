@@ -794,9 +794,11 @@ public class TeacherController implements Initializable {
     }
 
     /** 顶部按钮点击 */
+    /** 顶部退出登录按钮点击 */
     @FXML
-    private void handleTopRightButton(ActionEvent event) {
-        showAlert(Alert.AlertType.INFORMATION, "功能待实现");
+    private void handleLogout(ActionEvent event) {
+        // 返回登录界面
+        MainApp.showLogin();
     }
 
     /** 编辑题型分值对话框 */

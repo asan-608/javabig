@@ -79,3 +79,12 @@
     -fx-max-width: 800;
     -fx-max-height: 1100;
 }
+
+/* 学生个人中心信息区域 */
+#profileBox {
+    -fx-alignment: center;
+}
+
+#profileBox .label {
+    -fx-font-size: 16px;
+}
