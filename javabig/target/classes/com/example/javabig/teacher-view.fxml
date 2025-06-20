@@ -36,9 +36,12 @@
                     </graphic>
                     <content>
                         <AnchorPane>
-                            <Label text="欢迎进入系统首页"
-                                   AnchorPane.leftAnchor="20"
-                                   AnchorPane.topAnchor="20" />
+                            <ImageView fx:id="wordCloudView"
+                                       AnchorPane.topAnchor="10"
+                                       AnchorPane.leftAnchor="10"
+                                       AnchorPane.rightAnchor="10"
+                                       AnchorPane.bottomAnchor="10"
+                                       preserveRatio="true" />
                         </AnchorPane>
                     </content>
                 </Tab>

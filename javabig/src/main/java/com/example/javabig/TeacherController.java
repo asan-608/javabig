@@ -15,6 +15,20 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.image.ImageView;
+import javafx.embed.swing.SwingFXUtils;
+
+import com.kennycason.kumo.WordCloud;
+import com.kennycason.kumo.bg.RectangleBackground;
+import com.kennycason.kumo.palette.ColorPalette;
+import com.kennycason.kumo.font.scale.SqrtFontScalar;
+import com.kennycason.kumo.collide.CollisionMode;
+import com.kennycason.kumo.nlp.FrequencyAnalyzer;
+import com.kennycason.kumo.wordstart.CenterWordStart;
+import com.kennycason.kumo.WordFrequency;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.image.BufferedImage;
 
 import java.net.URL;
 import java.sql.Connection;
@@ -52,6 +66,7 @@ public class TeacherController implements Initializable {
     @FXML private TableColumn<Question, String> authorColumn;
     @FXML private javafx.scene.control.Label teacherNameLabel;
     @FXML private javafx.scene.control.Button topRightButton;
+    @FXML private ImageView wordCloudView;
 
     // 题型管理相关控件
     @FXML private Tab typeManageTab;
@@ -292,6 +307,39 @@ public class TeacherController implements Initializable {
         }
     }
 
+    /** 从所有题目内容生成词云 */
+    private void loadWordCloud() {
+        if (wordCloudView == null) {
+            return;
+        }
+        String sql = "SELECT content FROM questions";
+        java.util.List<String> texts = new java.util.ArrayList<>();
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                texts.add(rs.getString(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        FrequencyAnalyzer analyzer = new FrequencyAnalyzer();
+        java.util.List<WordFrequency> wordFrequencies = analyzer.load(texts);
+        Dimension dimension = new Dimension(600, 400);
+        WordCloud wordCloud = new WordCloud(dimension, CollisionMode.PIXEL_PERFECT);
+        wordCloud.setPadding(2);
+        wordCloud.setBackground(new RectangleBackground(dimension));
+        wordCloud.setFontScalar(new SqrtFontScalar(10, 40));
+        wordCloud.setBackgroundColor(new Color(255,255,255,0));
+        wordCloud.setColorPalette(new ColorPalette(new Color(64,69,241), new Color(64,141,241), new Color(0x408DF1), new Color(0x40A7F1)));
+        wordCloud.setWordStartStrategy(new CenterWordStart());
+        wordCloud.build(wordFrequencies);
+        BufferedImage img = wordCloud.getBufferedImage();
+        javafx.scene.image.Image fxImage = SwingFXUtils.toFXImage(img, null);
+        wordCloudView.setImage(fxImage);
+    }
+
     /** 点击新增题型按钮 */
     @FXML
     private void handleAddType(ActionEvent event) {
@@ -470,6 +518,7 @@ public class TeacherController implements Initializable {
             editingQuestionId = 0L;
             clearFormFields();
             loadQuestions();
+            loadWordCloud();
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "添加失败：" + e.getMessage());
@@ -498,6 +547,7 @@ public class TeacherController implements Initializable {
             }
             conn.commit();
             loadQuestions();
+            loadWordCloud();
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "删除失败：" + e.getMessage());
@@ -579,6 +629,7 @@ public class TeacherController implements Initializable {
         loadQuestions();
         loadStudents();
         loadExamPapers();
+        loadWordCloud();
         if (mainTabPane != null) {
             mainTabPane.getSelectionModel().selectFirst();
         }
@@ -887,6 +938,7 @@ public class TeacherController implements Initializable {
                 showAlert(Alert.AlertType.INFORMATION, "新增成功");
                 dialog.close();
                 loadQuestions();
+                loadWordCloud();
             } catch (SQLException ex) {
                 ex.printStackTrace();
                 showAlert(Alert.AlertType.ERROR, "新增失败：" + ex.getMessage());

@@ -66,4 +66,10 @@
     -fx-text-fill: #ffffff;
     -fx-background-radius: 4;
     -fx-padding: 6 12;
+    
+}
+
+/* 系统首页词云区域 */
+#wordCloudView {
+    -fx-background-color: transparent;
 }

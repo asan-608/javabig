@@ -10,6 +10,10 @@ module com.example.javabig {
     requires java.sql;
     requires java.net.http;
     requires com.google.gson;
+    requires com.kennycason.kumo.core;
+    requires javafx.swing;
+    requires java.desktop;
+
 
     opens com.example.javabig to javafx.fxml;
     exports com.example.javabig;
