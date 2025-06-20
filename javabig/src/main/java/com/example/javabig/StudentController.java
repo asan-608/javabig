@@ -24,6 +24,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ResourceBundle;
+import java.security.MessageDigest;
 
 public class StudentController implements Initializable {
     @FXML private Label studentNameLabel;
@@ -38,6 +39,10 @@ public class StudentController implements Initializable {
     @FXML private TableColumn<PaperResult, String> scoreValueColumn;
     @FXML private TextArea aiConversationArea;
     @FXML private TextField aiInputField;
+    @FXML private Label infoUsernameLabel;
+    @FXML private Label infoEmailLabel;
+    @FXML private Label infoPhoneLabel;
+    @FXML private Label infoCreatedLabel;
 
     private static final String AI_API_KEY = "sk-dbhV140jGebFvQbT2B2KxfnEzZdrzQRmaYoxzMgVcErTXACh";
     private static final String AI_API_URL = "https://xiaoai.plus/v1/chat/completions";
@@ -128,6 +133,25 @@ public class StudentController implements Initializable {
         }
     }
 
+    private void loadProfile() {
+        if (infoUsernameLabel == null) return;
+        String sql = "SELECT username, email, phone, created_at FROM users WHERE user_id=?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, currentUserId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    infoUsernameLabel.setText("用户名: " + rs.getString(1));
+                    infoEmailLabel.setText("邮箱: " + rs.getString(2));
+                    infoPhoneLabel.setText("手机号: " + rs.getString(3));
+                    infoCreatedLabel.setText("注册时间: " + rs.getString(4));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void openExamWindow(ExamPaper paper) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("exam-view.fxml"));
@@ -151,6 +175,7 @@ public class StudentController implements Initializable {
             studentNameLabel.setText("账号：" + username);
         }
         loadScores();
+        loadProfile();
     }
 
     @FXML
@@ -203,6 +228,158 @@ public class StudentController implements Initializable {
     private void handleLogout() {
         MainApp.showLogin();
     }
+
+    @FXML
+    private void handleEditInfo() {
+        javafx.scene.control.TextField nameField = new javafx.scene.control.TextField(currentUsername);
+        javafx.scene.control.TextField emailField = new javafx.scene.control.TextField();
+        javafx.scene.control.TextField phoneField = new javafx.scene.control.TextField();
+
+        // load current values
+        String sql = "SELECT email, phone FROM users WHERE user_id=?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, currentUserId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    emailField.setText(rs.getString(1));
+                    phoneField.setText(rs.getString(2));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        javafx.scene.control.Button saveBtn = new javafx.scene.control.Button("保存");
+        javafx.scene.control.Button cancelBtn = new javafx.scene.control.Button("取消");
+        javafx.scene.layout.HBox btnBox = new javafx.scene.layout.HBox(10, saveBtn, cancelBtn);
+        btnBox.setAlignment(javafx.geometry.Pos.CENTER);
+        javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(10,
+                new javafx.scene.control.Label("编辑学生信息"),
+                nameField, emailField, phoneField, btnBox);
+        root.setAlignment(javafx.geometry.Pos.CENTER);
+        root.setId("registerForm");
+        javafx.scene.Scene scene = new javafx.scene.Scene(root, 300, 250);
+        scene.getStylesheets().add(getClass().getResource("auth.css").toExternalForm());
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.setTitle("编辑学生");
+        dialog.setScene(scene);
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+        saveBtn.setOnAction(e -> {
+            String name = nameField.getText().trim();
+            String email = emailField.getText().trim();
+            String phone = phoneField.getText().trim();
+            String updateSql = "UPDATE users SET username=?, email=?, phone=? WHERE user_id=?";
+            try (Connection conn = DBUtil.getConnection();
+                 PreparedStatement ps2 = conn.prepareStatement(updateSql)) {
+                ps2.setString(1, name);
+                ps2.setString(2, email);
+                ps2.setString(3, phone);
+                ps2.setLong(4, currentUserId);
+                ps2.executeUpdate();
+                currentUsername = name;
+                if (studentNameLabel != null) {
+                    studentNameLabel.setText("账号：" + name);
+                }
+                loadProfile();
+                showAlert(Alert.AlertType.INFORMATION, "修改成功");
+                dialog.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "修改失败：" + ex.getMessage());
+            }
+        });
+        cancelBtn.setOnAction(e -> dialog.close());
+        dialog.showAndWait();
+    }
+
+    @FXML
+    private void handleChangePassword() {
+        javafx.scene.control.PasswordField oldField = new javafx.scene.control.PasswordField();
+        oldField.setPromptText("原密码");
+        javafx.scene.control.PasswordField newField = new javafx.scene.control.PasswordField();
+        newField.setPromptText("新密码");
+        javafx.scene.control.PasswordField confirmField = new javafx.scene.control.PasswordField();
+        confirmField.setPromptText("确认新密码");
+        javafx.scene.control.Button saveBtn = new javafx.scene.control.Button("修改");
+        javafx.scene.control.Button cancelBtn = new javafx.scene.control.Button("取消");
+        javafx.scene.layout.HBox btnBox = new javafx.scene.layout.HBox(10, saveBtn, cancelBtn);
+        btnBox.setAlignment(javafx.geometry.Pos.CENTER);
+        javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(10,
+                new javafx.scene.control.Label("修改密码"),
+                oldField, newField, confirmField, btnBox);
+        root.setAlignment(javafx.geometry.Pos.CENTER);
+        root.setId("registerForm");
+        javafx.scene.Scene scene = new javafx.scene.Scene(root, 300, 250);
+        scene.getStylesheets().add(getClass().getResource("auth.css").toExternalForm());
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.setTitle("修改密码");
+        dialog.setScene(scene);
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+        saveBtn.setOnAction(e -> {
+            String oldPass = oldField.getText();
+            String newPass = newField.getText();
+            String conf = confirmField.getText();
+            if (oldPass.isEmpty() || newPass.isEmpty() || conf.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "请填写完整信息");
+                return;
+            }
+            if (!newPass.equals(conf)) {
+                showAlert(Alert.AlertType.WARNING, "两次密码不一致");
+                return;
+            }
+            String checkSql = "SELECT password_hash FROM users WHERE user_id=?";
+            try (Connection conn = DBUtil.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(checkSql)) {
+                ps.setLong(1, currentUserId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        String hash = rs.getString(1);
+                        if (!hash.equals(sha256(oldPass))) {
+                            showAlert(Alert.AlertType.ERROR, "原密码错误");
+                            return;
+                        }
+                    }
+                }
+
+                String update = "UPDATE users SET password_hash=? WHERE user_id=?";
+                try (PreparedStatement ps2 = conn.prepareStatement(update)) {
+                    ps2.setString(1, sha256(newPass));
+                    ps2.setLong(2, currentUserId);
+                    ps2.executeUpdate();
+                    showAlert(Alert.AlertType.INFORMATION, "修改成功");
+                    dialog.close();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "修改失败：" + ex.getMessage());
+            }
+        });
+        cancelBtn.setOnAction(e -> dialog.close());
+        dialog.showAndWait();
+    }
+
+    private void showAlert(Alert.AlertType type, String msg) {
+        Alert a = new Alert(type);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
+    }
+
+    private String sha256(String s) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] bs = md.digest(s.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bs) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     public static class ExamPaper {
         private final long paperId;
