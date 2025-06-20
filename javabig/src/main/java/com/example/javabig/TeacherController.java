@@ -51,6 +51,13 @@ public class TeacherController implements Initializable {
     @FXML private javafx.scene.control.Label teacherNameLabel;
     @FXML private javafx.scene.control.Button topRightButton;
 
+    // 题型管理相关控件
+    @FXML private Tab typeManageTab;
+    @FXML private TableView<QuestionType> typeTable;
+    @FXML private TableColumn<QuestionType, String> typeNameColumn;
+    @FXML private TableColumn<QuestionType, Integer> typeScoreColumn;
+    @FXML private TableColumn<QuestionType, Void> typeActionColumn;
+
     // 学生管理相关控件
     @FXML private TableView<Student> studentTable;
     @FXML private TableColumn<Student, String> studentNameColumn;
@@ -116,6 +123,37 @@ public class TeacherController implements Initializable {
                 }
             });
         }
+
+        if (typeNameColumn != null) {
+            typeNameColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("name"));
+        }
+        if (typeScoreColumn != null) {
+            typeScoreColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("score"));
+        }
+        if (typeActionColumn != null) {
+            typeActionColumn.setCellFactory(col -> new javafx.scene.control.TableCell<>() {
+                private final javafx.scene.control.Button editBtn = new javafx.scene.control.Button("修改分数");
+                private final javafx.scene.control.Button addBtn = new javafx.scene.control.Button("新增题目");
+                private final javafx.scene.layout.HBox box = new javafx.scene.layout.HBox(5, editBtn, addBtn);
+                {
+                    editBtn.setOnAction(e -> {
+                        QuestionType qt = getTableView().getItems().get(getIndex());
+                        showEditTypeDialog(qt);
+                    });
+                    addBtn.setOnAction(e -> {
+                        QuestionType qt = getTableView().getItems().get(getIndex());
+                        showAddQuestionDialog(qt);
+                    });
+                }
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setGraphic(empty ? null : box);
+                }
+            });
+        }
+
+        loadQuestionTypes();
     }
 
     /** 加载当前教师的题库到表格 */
@@ -156,6 +194,81 @@ public class TeacherController implements Initializable {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    /** 加载题型列表 */
+    private void loadQuestionTypes() {
+        if (typeTable == null) {
+            return;
+        }
+        typeTable.getItems().clear();
+        String sql = "SELECT type_id, code, name, score FROM question_types";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                typeTable.getItems().add(new QuestionType(
+                        rs.getInt(1), rs.getString(2), rs.getString(3), rs.getInt(4)));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** 点击新增题型按钮 */
+    @FXML
+    private void handleAddType(ActionEvent event) {
+        javafx.scene.control.TextField codeField = new javafx.scene.control.TextField();
+        codeField.setPromptText("题型编码");
+        javafx.scene.control.TextField nameField = new javafx.scene.control.TextField();
+        nameField.setPromptText("题型名称");
+        javafx.scene.control.TextField scoreField = new javafx.scene.control.TextField();
+        scoreField.setPromptText("分值");
+        javafx.scene.control.Button saveBtn = new javafx.scene.control.Button("保存");
+        javafx.scene.control.Button cancelBtn = new javafx.scene.control.Button("取消");
+        javafx.scene.layout.HBox btnBox = new javafx.scene.layout.HBox(10, saveBtn, cancelBtn);
+        btnBox.setAlignment(javafx.geometry.Pos.CENTER);
+        javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(10,
+                new javafx.scene.control.Label("新增题型"), codeField, nameField, scoreField, btnBox);
+        root.setAlignment(javafx.geometry.Pos.CENTER);
+        root.setId("registerForm");
+        javafx.scene.Scene scene = new javafx.scene.Scene(root, 300, 250);
+        scene.getStylesheets().add(getClass().getResource("auth.css").toExternalForm());
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.setTitle("新增题型");
+        dialog.setScene(scene);
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+        saveBtn.setOnAction(e -> {
+            String code = codeField.getText().trim();
+            String name = nameField.getText().trim();
+            String s = scoreField.getText().trim();
+            if (code.isEmpty() || name.isEmpty() || s.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "请填写完整信息");
+                return;
+            }
+            int score;
+            try { score = Integer.parseInt(s); } catch (NumberFormatException ex) {
+                showAlert(Alert.AlertType.WARNING, "分值必须为数字");
+                return;
+            }
+            String sql = "INSERT INTO question_types (code, name, score) VALUES (?, ?, ?)";
+            try (Connection conn = DBUtil.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, code);
+                ps.setString(2, name);
+                ps.setInt(3, score);
+                ps.executeUpdate();
+                showAlert(Alert.AlertType.INFORMATION, "新增成功");
+                dialog.close();
+                loadQuestionTypes();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "新增失败：" + ex.getMessage());
+            }
+        });
+        cancelBtn.setOnAction(e -> dialog.close());
+        dialog.showAndWait();
     }
     /**
      * 点击“添加”按钮时调用，负责收集表单、校验并写库
@@ -435,10 +548,248 @@ public class TeacherController implements Initializable {
         public String getCreatedAt() { return createdAt; }
     }
 
+    /** 题型表格数据结构 */
+    public static class QuestionType {
+        private final int typeId;
+        private final String code;
+        private final String name;
+        private final int score;
+
+        public QuestionType(int typeId, String code, String name, int score) {
+            this.typeId = typeId;
+            this.code = code;
+            this.name = name;
+            this.score = score;
+        }
+
+        public int getTypeId() { return typeId; }
+        public String getCode() { return code; }
+        public String getName() { return name; }
+        public int getScore() { return score; }
+    }
+
     /** 顶部按钮点击 */
     @FXML
     private void handleTopRightButton(ActionEvent event) {
         showAlert(Alert.AlertType.INFORMATION, "功能待实现");
+    }
+
+    /** 编辑题型分值对话框 */
+    private void showEditTypeDialog(QuestionType qt) {
+        javafx.scene.control.TextField scoreField = new javafx.scene.control.TextField(String.valueOf(qt.getScore()));
+        javafx.scene.control.Button saveBtn = new javafx.scene.control.Button("保存");
+        javafx.scene.control.Button cancelBtn = new javafx.scene.control.Button("取消");
+        javafx.scene.layout.HBox btnBox = new javafx.scene.layout.HBox(10, saveBtn, cancelBtn);
+        btnBox.setAlignment(javafx.geometry.Pos.CENTER);
+        javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(10,
+                new javafx.scene.control.Label("修改分值 - " + qt.getName()),
+                scoreField, btnBox);
+        root.setAlignment(javafx.geometry.Pos.CENTER);
+        root.setId("registerForm");
+        javafx.scene.Scene scene = new javafx.scene.Scene(root, 250, 180);
+        scene.getStylesheets().add(getClass().getResource("auth.css").toExternalForm());
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.setTitle("修改分值");
+        dialog.setScene(scene);
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+        saveBtn.setOnAction(e -> {
+            String s = scoreField.getText().trim();
+            int score;
+            try { score = Integer.parseInt(s); } catch (NumberFormatException ex) {
+                showAlert(Alert.AlertType.WARNING, "分值必须为数字");
+                return;
+            }
+            String sql = "UPDATE question_types SET score=? WHERE type_id=?";
+            try (Connection conn = DBUtil.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, score);
+                ps.setInt(2, qt.getTypeId());
+                ps.executeUpdate();
+                showAlert(Alert.AlertType.INFORMATION, "修改成功");
+                dialog.close();
+                loadQuestionTypes();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "修改失败：" + ex.getMessage());
+            }
+        });
+        cancelBtn.setOnAction(e -> dialog.close());
+        dialog.showAndWait();
+    }
+
+    /** 新增题目对话框，根据题型不同呈现 */
+    private void showAddQuestionDialog(QuestionType qt) {
+        javafx.scene.control.TextArea contentArea = new javafx.scene.control.TextArea();
+        contentArea.setPromptText("题干");
+        javafx.scene.control.ChoiceBox<String> diffBox = new javafx.scene.control.ChoiceBox<>(
+                FXCollections.observableArrayList("简单", "中等", "困难"));
+        diffBox.setValue("简单");
+
+        javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(10);
+        root.getChildren().addAll(new javafx.scene.control.Label("新增题目 - " + qt.getName()), contentArea);
+
+        java.util.List<javafx.scene.control.TextField> optionFields = java.util.Arrays.asList(
+                new javafx.scene.control.TextField(),
+                new javafx.scene.control.TextField(),
+                new javafx.scene.control.TextField(),
+                new javafx.scene.control.TextField());
+
+        switch (qt.getCode()) {
+            case "single_choice":
+                javafx.scene.control.ToggleGroup tg = new javafx.scene.control.ToggleGroup();
+                javafx.scene.layout.HBox optBox = new javafx.scene.layout.HBox(20);
+                char c1 = 'A';
+                for (int i = 0; i < 4; i++) {
+                    javafx.scene.layout.VBox vb = new javafx.scene.layout.VBox(5);
+                    javafx.scene.control.RadioButton rb = new javafx.scene.control.RadioButton(String.valueOf((char)(c1 + i)));
+                    rb.setToggleGroup(tg);
+                    rb.setUserData(i);
+                    optionFields.get(i).setPromptText("选项 " + (char)(c1 + i));
+                    vb.getChildren().addAll(rb, optionFields.get(i));
+                    optBox.getChildren().add(vb);
+                }
+                root.getChildren().addAll(new javafx.scene.control.Label("选项"), optBox);
+                break;
+            case "multiple_choice":
+                javafx.scene.layout.HBox optBox2 = new javafx.scene.layout.HBox(20);
+                char c2 = 'A';
+                for (int i = 0; i < 4; i++) {
+                    javafx.scene.layout.VBox vb = new javafx.scene.layout.VBox(5);
+                    javafx.scene.control.CheckBox cb = new javafx.scene.control.CheckBox(String.valueOf((char)(c2 + i)));
+                    cb.setUserData(i);
+                    optionFields.get(i).setPromptText("选项 " + (char)(c2 + i));
+                    vb.getChildren().addAll(cb, optionFields.get(i));
+                    optBox2.getChildren().add(vb);
+                }
+                root.getChildren().addAll(new javafx.scene.control.Label("选项"), optBox2);
+                break;
+            case "fill_blank":
+                javafx.scene.control.TextField answerField = new javafx.scene.control.TextField();
+                answerField.setPromptText("答案");
+                optionFields = java.util.Collections.singletonList(answerField);
+                root.getChildren().add(new javafx.scene.control.Label("答案"));
+                root.getChildren().add(answerField);
+                break;
+            case "true_false":
+                javafx.scene.control.ToggleGroup tfGroup = new javafx.scene.control.ToggleGroup();
+                javafx.scene.control.RadioButton trueBtn = new javafx.scene.control.RadioButton("正确");
+                trueBtn.setToggleGroup(tfGroup);
+                trueBtn.setUserData("T");
+                javafx.scene.control.RadioButton falseBtn = new javafx.scene.control.RadioButton("错误");
+                falseBtn.setToggleGroup(tfGroup);
+                falseBtn.setUserData("F");
+                javafx.scene.layout.HBox tfBox = new javafx.scene.layout.HBox(10, trueBtn, falseBtn);
+                root.getChildren().add(new javafx.scene.control.Label("正确答案"));
+                root.getChildren().add(tfBox);
+                break;
+        }
+
+        root.getChildren().add(diffBox);
+        javafx.scene.control.Button saveBtn = new javafx.scene.control.Button("保存");
+        javafx.scene.control.Button cancelBtn = new javafx.scene.control.Button("取消");
+        javafx.scene.layout.HBox btnBox = new javafx.scene.layout.HBox(10, saveBtn, cancelBtn);
+        btnBox.setAlignment(javafx.geometry.Pos.CENTER);
+        root.getChildren().add(btnBox);
+
+        root.setAlignment(javafx.geometry.Pos.CENTER);
+        root.setId("registerForm");
+        javafx.scene.Scene scene = new javafx.scene.Scene(root, 400, 350);
+        scene.getStylesheets().add(getClass().getResource("auth.css").toExternalForm());
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.setTitle("新增题目");
+        dialog.setScene(scene);
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+        saveBtn.setOnAction(e -> {
+            String content = contentArea.getText().trim();
+            if (content.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "请填写题干");
+                return;
+            }
+
+            int difficultyId;
+            switch (diffBox.getValue()) {
+                case "中等": difficultyId = 2; break;
+                case "困难": difficultyId = 3; break;
+                default: difficultyId = 1; break;
+            }
+
+            String insertQ = "INSERT INTO questions (content, type_id, difficulty_id, correct_answer, explanation, created_by) VALUES (?, ?, ?, ?, ?, ?)";
+            String insertOpt = "INSERT INTO question_options (question_id, content, is_correct, sequence) VALUES (?, ?, ?, ?)";
+
+            try (Connection conn = DBUtil.getConnection()) {
+                conn.setAutoCommit(false);
+                long qid;
+                try (PreparedStatement ps = conn.prepareStatement(insertQ, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, content);
+                    ps.setInt(2, qt.getTypeId());
+                    ps.setInt(3, difficultyId);
+                    String correctAnswer = "";
+
+                    if ("single_choice".equals(qt.getCode())) {
+                        Toggle selected = tg.getSelectedToggle();
+                        if (selected == null) { showAlert(Alert.AlertType.WARNING, "请选择正确答案"); return; }
+                        correctAnswer = String.valueOf((char)('A' + Integer.parseInt(selected.getUserData().toString())));
+                    } else if ("multiple_choice".equals(qt.getCode())) {
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 0; i < 4; i++) {
+                            javafx.scene.control.CheckBox cb = (javafx.scene.control.CheckBox)((javafx.scene.layout.VBox) ((javafx.scene.layout.HBox)root.getChildren().get(2)).getChildren().get(i)).getChildren().get(0);
+                            if (cb.isSelected()) sb.append((char)('A' + i));
+                        }
+                        if (sb.length() == 0) { showAlert(Alert.AlertType.WARNING, "请选择正确答案"); return; }
+                        correctAnswer = sb.toString();
+                    } else if ("fill_blank".equals(qt.getCode())) {
+                        correctAnswer = optionFields.get(0).getText().trim();
+                        if (correctAnswer.isEmpty()) { showAlert(Alert.AlertType.WARNING, "请填写答案"); return; }
+                    } else if ("true_false".equals(qt.getCode())) {
+                        Toggle sel = tfGroup.getSelectedToggle();
+                        if (sel == null) { showAlert(Alert.AlertType.WARNING, "请选择答案"); return; }
+                        correctAnswer = sel.getUserData().toString();
+                    }
+
+                    ps.setString(4, correctAnswer);
+                    ps.setString(5, "");
+                    ps.setLong(6, currentTeacherId);
+                    ps.executeUpdate();
+                    ResultSet rs = ps.getGeneratedKeys();
+                    rs.next();
+                    qid = rs.getLong(1);
+                }
+
+                if ("single_choice".equals(qt.getCode()) || "multiple_choice".equals(qt.getCode())) {
+                    try (PreparedStatement ps = conn.prepareStatement(insertOpt)) {
+                        for (int i = 0; i < 4; i++) {
+                            ps.setLong(1, qid);
+                            ps.setString(2, optionFields.get(i).getText().trim());
+                            boolean correct;
+                            if ("single_choice".equals(qt.getCode())) {
+                                Toggle selected = tg.getSelectedToggle();
+                                correct = selected != null && Integer.parseInt(selected.getUserData().toString()) == i;
+                            } else {
+                                javafx.scene.control.CheckBox cb = (javafx.scene.control.CheckBox)((javafx.scene.layout.VBox)((javafx.scene.layout.HBox)root.getChildren().get(2)).getChildren().get(i)).getChildren().get(0);
+                                correct = cb.isSelected();
+                            }
+                            ps.setBoolean(3, correct);
+                            ps.setInt(4, i + 1);
+                            ps.addBatch();
+                        }
+                        ps.executeBatch();
+                    }
+                }
+
+                conn.commit();
+                showAlert(Alert.AlertType.INFORMATION, "新增成功");
+                dialog.close();
+                loadQuestions();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "新增失败：" + ex.getMessage());
+            }
+        });
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        dialog.showAndWait();
     }
 
     /** 显示编辑学生对话框 */

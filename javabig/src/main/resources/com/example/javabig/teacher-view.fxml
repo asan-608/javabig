@@ -52,6 +52,7 @@
 库
 信
 息
+
                             </text>
                         </Label>
                     </graphic>
@@ -77,15 +78,15 @@
                     </content>
                 </Tab>
 
-                <!-- 试题新增 -->
-                <Tab fx:id="addChoiceTab">
+                <!-- 试题新增 -->␊
+                <Tab fx:id="addChoiceTab">␊
                     <graphic>
                         <Label wrapText="true" textAlignment="CENTER">
                             <text>
-试
-题
-新
-增
+                                试
+                                题
+                                新
+                                增
                             </text>
                         </Label>
                     </graphic>
@@ -121,6 +122,7 @@
                                     </VBox>
                                     <VBox spacing="5">
                                         <RadioButton fx:id="optionCRadio"
+
                                                      toggleGroup="$optionsToggleGroup"
                                                      userData="2"
                                                      text="C"/>
@@ -146,6 +148,39 @@
                             </VBox>
                         </AnchorPane>
                     </content>
+
+                </Tab>
+
+                <!-- 题型管理 -->
+                <Tab fx:id="typeManageTab">
+                    <graphic>
+                        <Label wrapText="true" textAlignment="CENTER">
+                            <text>
+                                题
+                                型
+                                管
+                                理
+                            </text>
+                        </Label>
+                    </graphic>
+                    <content>
+                        <AnchorPane>
+                            <VBox spacing="10"
+                                  AnchorPane.topAnchor="10"
+                                  AnchorPane.leftAnchor="10"
+                                  AnchorPane.rightAnchor="10"
+                                  AnchorPane.bottomAnchor="10">
+                                <Button text="新增题型" onAction="#handleAddType" maxWidth="100" />
+                                <TableView fx:id="typeTable" prefHeight="400">
+                                    <columns>
+                                        <TableColumn fx:id="typeNameColumn" text="题型名称" prefWidth="200" />
+                                        <TableColumn fx:id="typeScoreColumn" text="分值" prefWidth="80" />
+                                        <TableColumn fx:id="typeActionColumn" text="操作" prefWidth="200" />
+                                    </columns>
+                                </TableView>
+                            </VBox>
+                        </AnchorPane>
+                    </content>
                 </Tab>
 
                 <!-- 学生管理 -->
@@ -153,10 +188,10 @@
                     <graphic>
                         <Label wrapText="true" textAlignment="CENTER">
                             <text>
-学
-生
-管
-理
+                                学
+                                生
+                                管
+                                理
                             </text>
                         </Label>
                     </graphic>
