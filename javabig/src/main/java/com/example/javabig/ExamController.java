@@ -1,5 +1,6 @@
 package com.example.javabig;
 
+
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
@@ -25,8 +26,12 @@ public class ExamController {
     private final List<QuestionData> questionList = new ArrayList<>();
     private int currentIndex = 0;
     private int score = 0;
+    private long currentPaperId = 0L;
+    private long currentUserId = 0L;
 
-    public void startExam(long paperId, String title) {
+    public void startExam(long paperId, String title, long userId) {
+        this.currentPaperId = paperId;
+        this.currentUserId = userId;
         paperTitleLabel.setText(title);
         loadQuestions(paperId);
         if (!questionList.isEmpty()) {
@@ -68,7 +73,7 @@ public class ExamController {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace();            e.printStackTrace();
         }
     }
 
@@ -93,8 +98,24 @@ public class ExamController {
         } else {
             alert(Alert.AlertType.INFORMATION,
                     "考试完成，得分：" + score + "/" + questionList.size());
+            saveResult();
             Stage stage = (Stage) paperTitleLabel.getScene().getWindow();
             stage.close();
+        }
+    }
+
+    private void saveResult() {
+        String sql = "INSERT INTO exam_results (user_id, paper_id, score, taken_at) " +
+                "VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE score=?, taken_at=NOW()";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, currentUserId);
+            ps.setLong(2, currentPaperId);
+            ps.setInt(3, score);
+            ps.setInt(4, score);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
