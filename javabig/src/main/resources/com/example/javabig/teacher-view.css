@@ -76,8 +76,10 @@
 
 /* 限制主界面最大尺寸，避免窗口过大 */
 #dashboardRoot {
-    -fx-max-width: 800;
-    -fx-max-height: 1100;
+    -fx-min-width: 970;
+    -fx-max-width: 970;
+    -fx-max-height: 600;
+    -fx-min-height: 600;
 }
 
 /* 学生个人中心信息区域 */
@@ -87,4 +89,10 @@
 
 #profileBox .label {
     -fx-font-size: 16px;
+}
+
+
+#profileBox .button {
+    -fx-pref-width: 150;
+    -fx-font-size: 14px;
 }

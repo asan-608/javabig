@@ -9,9 +9,6 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
-import com.example.javabig.TeacherController;
-import com.example.javabig.StudentController;
-
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

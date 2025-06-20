@@ -144,10 +144,8 @@
                                 <Label fx:id="infoEmailLabel" text="邮箱:" />
                                 <Label fx:id="infoPhoneLabel" text="手机号:" />
                                 <Label fx:id="infoCreatedLabel" text="注册时间:" />
-                                <HBox spacing="10">
-                                    <Button text="修改信息" onAction="#handleEditInfo" />
-                                    <Button text="修改密码" onAction="#handleChangePassword" />
-                                </HBox>
+                                <Button text="修改信息" onAction="#handleEditInfo" prefWidth="150" />
+                                <Button text="修改密码" onAction="#handleChangePassword" prefWidth="150" />
                             </VBox>
                         </AnchorPane>
                     </content>

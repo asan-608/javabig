@@ -77,6 +77,9 @@ public class StudentController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+
+        scoreLineChart.setLegendVisible(false);
+        scoreBarChart.setLegendVisible(false);
         if (titleColumn != null) {
             titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
         }

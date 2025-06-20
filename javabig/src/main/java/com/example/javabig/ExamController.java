@@ -25,9 +25,9 @@ public class ExamController {
 
     private final List<QuestionData> questionList = new ArrayList<>();
     private final List<String> userAnswers = new ArrayList<>();
-    private ToggleGroup singleGroup = null; // for single choice & true/false
-    private List<CheckBox> multiChecks = null; // for multiple choice
-    private TextField blankField = null; // for fill in blank
+    private ToggleGroup singleGroup = null; 
+    private List<CheckBox> multiChecks = null;
+    private TextField blankField = null;
     private int currentIndex = 0;
     private int score = 0;
     private long currentPaperId = 0L;

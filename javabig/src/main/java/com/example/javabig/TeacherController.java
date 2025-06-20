@@ -109,6 +109,9 @@ public class TeacherController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
+        paperScoreLineChart.setLegendVisible(false);
+        scoreBarChart.setLegendVisible(false);
         // 初始化难度选项
         difficultyChoiceBox.setItems(
             FXCollections.observableArrayList("简单", "中等", "困难")
