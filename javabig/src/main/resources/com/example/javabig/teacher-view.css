@@ -73,3 +73,9 @@
 #wordCloudView {
     -fx-background-color: transparent;
 }
+
+/* 限制主界面最大尺寸，避免窗口过大 */
+#dashboardRoot {
+    -fx-max-width: 800;
+    -fx-max-height: 1100;
+}
