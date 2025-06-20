@@ -230,9 +230,25 @@
                     </graphic>
                     <content>
                         <AnchorPane>
-                            <Label text="试卷管理功能待实现"
-                                   AnchorPane.leftAnchor="20"
-                                   AnchorPane.topAnchor="20"/>
+                            <VBox spacing="10"
+                                  AnchorPane.topAnchor="10"
+                                  AnchorPane.leftAnchor="10"
+                                  AnchorPane.rightAnchor="10"
+                                  AnchorPane.bottomAnchor="10">
+                                <HBox spacing="10">
+                                    <Button text="手动新增试卷" onAction="#handleAddPaperManual"/>
+                                    <Button text="自动组卷" onAction="#handleAddPaperAuto"/>
+                                </HBox>
+                                <TableView fx:id="paperTable" prefHeight="400">
+                                    <columns>
+                                        <TableColumn fx:id="paperTitleColumn" text="名称" prefWidth="160"/>
+                                        <TableColumn fx:id="paperDescColumn" text="描述" prefWidth="200"/>
+                                        <TableColumn fx:id="paperAuthorColumn" text="出题人" prefWidth="120"/>
+                                        <TableColumn fx:id="paperCreatedColumn" text="出题时间" prefWidth="150"/>
+                                        <TableColumn fx:id="paperActionColumn" text="操作" prefWidth="100"/>
+                                    </columns>
+                                </TableView>
+                            </VBox>
                         </AnchorPane>
                     </content>
                 </Tab>

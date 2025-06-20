@@ -68,6 +68,14 @@ public class TeacherController implements Initializable {
     @FXML private TableColumn<Student, String> studentCreatedColumn;
     @FXML private TableColumn<Student, Void> studentActionColumn;
 
+    // 试卷管理相关控件
+    @FXML private TableView<ExamPaper> paperTable;
+    @FXML private TableColumn<ExamPaper, String> paperTitleColumn;
+    @FXML private TableColumn<ExamPaper, String> paperDescColumn;
+    @FXML private TableColumn<ExamPaper, String> paperAuthorColumn;
+    @FXML private TableColumn<ExamPaper, String> paperCreatedColumn;
+    @FXML private TableColumn<ExamPaper, Void> paperActionColumn;
+
     // 当前教师（管理员）ID，需要在登录时赋值
     private long currentTeacherId = 0L;
     private String currentTeacherName = "";
@@ -132,6 +140,35 @@ public class TeacherController implements Initializable {
             });
         }
 
+        if (paperTitleColumn != null) {
+            paperTitleColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("title"));
+        }
+        if (paperDescColumn != null) {
+            paperDescColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("description"));
+        }
+        if (paperAuthorColumn != null) {
+            paperAuthorColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("author"));
+        }
+        if (paperCreatedColumn != null) {
+            paperCreatedColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("createdAt"));
+        }
+        if (paperActionColumn != null) {
+            paperActionColumn.setCellFactory(col -> new javafx.scene.control.TableCell<>() {
+                private final javafx.scene.control.Button delBtn = new javafx.scene.control.Button("删除");
+                {
+                    delBtn.setOnAction(e -> {
+                        ExamPaper p = getTableView().getItems().get(getIndex());
+                        handleDeletePaper(p);
+                    });
+                }
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setGraphic(empty ? null : delBtn);
+                }
+            });
+        }
+
         if (typeNameColumn != null) {
             typeNameColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("name"));
         }
@@ -162,6 +199,7 @@ public class TeacherController implements Initializable {
         }
 
         loadQuestionTypes();
+        loadExamPapers();
     }
 
     /** 加载当前教师的题库到表格 */
@@ -225,6 +263,29 @@ public class TeacherController implements Initializable {
             while (rs.next()) {
                 typeTable.getItems().add(new QuestionType(
                         rs.getInt(1), rs.getString(2), rs.getString(3), rs.getInt(4)));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** 加载试卷列表 */
+    private void loadExamPapers() {
+        if (paperTable == null) {
+            return;
+        }
+        paperTable.getItems().clear();
+        String sql = """
+            SELECT p.paper_id, p.title, p.description, u.username, p.created_at
+              FROM exam_papers p
+              JOIN users u ON p.created_by = u.user_id
+            """;
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                paperTable.getItems().add(new ExamPaper(
+                        rs.getLong(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5)));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -517,6 +578,7 @@ public class TeacherController implements Initializable {
         }
         loadQuestions();
         loadStudents();
+        loadExamPapers();
         if (mainTabPane != null) {
             mainTabPane.getSelectionModel().selectFirst();
         }
@@ -562,6 +624,29 @@ public class TeacherController implements Initializable {
         public String getUsername() { return username; }
         public String getEmail() { return email; }
         public String getPhone() { return phone; }
+        public String getCreatedAt() { return createdAt; }
+    }
+
+    /** 试卷表格数据结构 */
+    public static class ExamPaper {
+        private final long paperId;
+        private final String title;
+        private final String description;
+        private final String author;
+        private final String createdAt;
+
+        public ExamPaper(long paperId, String title, String description, String author, String createdAt) {
+            this.paperId = paperId;
+            this.title = title;
+            this.description = description;
+            this.author = author;
+            this.createdAt = createdAt;
+        }
+
+        public long getPaperId() { return paperId; }
+        public String getTitle() { return title; }
+        public String getDescription() { return description; }
+        public String getAuthor() { return author; }
         public String getCreatedAt() { return createdAt; }
     }
 
@@ -877,5 +962,152 @@ public class TeacherController implements Initializable {
                 }
             }
         });
+    }
+
+    /** 手动新增试卷按钮 */
+    @FXML
+    private void handleAddPaperManual(ActionEvent event) {
+        showAddPaperDialog(false);
+    }
+
+    /** 自动组卷按钮 */
+    @FXML
+    private void handleAddPaperAuto(ActionEvent event) {
+        showAddPaperDialog(true);
+    }
+
+    /** 删除试卷 */
+    private void handleDeletePaper(ExamPaper paper) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION,
+                "确认删除该试卷？", javafx.scene.control.ButtonType.OK, javafx.scene.control.ButtonType.CANCEL);
+        alert.showAndWait().ifPresent(bt -> {
+            if (bt == javafx.scene.control.ButtonType.OK) {
+                String sql1 = "DELETE FROM paper_questions WHERE paper_id=?";
+                String sql2 = "DELETE FROM exam_papers WHERE paper_id=?";
+                try (Connection conn = DBUtil.getConnection()) {
+                    conn.setAutoCommit(false);
+                    try (PreparedStatement ps = conn.prepareStatement(sql1)) {
+                        ps.setLong(1, paper.getPaperId());
+                        ps.executeUpdate();
+                    }
+                    try (PreparedStatement ps = conn.prepareStatement(sql2)) {
+                        ps.setLong(1, paper.getPaperId());
+                        ps.executeUpdate();
+                    }
+                    conn.commit();
+                    loadExamPapers();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    showAlert(Alert.AlertType.ERROR, "删除失败：" + ex.getMessage());
+                }
+            }
+        });
+    }
+
+    /** 新增试卷对话框 */
+    private void showAddPaperDialog(boolean auto) {
+        javafx.scene.control.TextField titleField = new javafx.scene.control.TextField();
+        titleField.setPromptText("试卷名称");
+        javafx.scene.control.TextField descField = new javafx.scene.control.TextField();
+        descField.setPromptText("试卷描述");
+        javafx.scene.control.Button saveBtn = new javafx.scene.control.Button("保存");
+        javafx.scene.control.Button cancelBtn = new javafx.scene.control.Button("取消");
+        javafx.scene.layout.HBox btnBox = new javafx.scene.layout.HBox(10, saveBtn, cancelBtn);
+        btnBox.setAlignment(javafx.geometry.Pos.CENTER);
+
+        javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(10, titleField, descField);
+
+        javafx.scene.control.Spinner<Integer> countSpinner = new javafx.scene.control.Spinner<>(1, 50, 5);
+        java.util.List<javafx.scene.control.CheckBox> checkBoxes = new java.util.ArrayList<>();
+
+        if (auto) {
+            root.getChildren().add(new javafx.scene.control.Label("题目数量"));
+            root.getChildren().add(countSpinner);
+        } else {
+            javafx.scene.layout.VBox qBox = new javafx.scene.layout.VBox(5);
+            String sql = "SELECT question_id, content FROM questions WHERE created_by=?";
+            try (Connection conn = DBUtil.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, currentTeacherId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        javafx.scene.control.CheckBox cb = new javafx.scene.control.CheckBox(rs.getString(2));
+                        cb.setUserData(rs.getLong(1));
+                        checkBoxes.add(cb);
+                        qBox.getChildren().add(cb);
+                    }
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            javafx.scene.control.ScrollPane sp = new javafx.scene.control.ScrollPane(qBox);
+            sp.setPrefHeight(200);
+            root.getChildren().add(sp);
+        }
+
+        root.getChildren().add(btnBox);
+        root.setAlignment(javafx.geometry.Pos.CENTER);
+        root.setId("registerForm");
+        javafx.scene.Scene scene = new javafx.scene.Scene(root, 350, auto ? 220 : 350);
+        scene.getStylesheets().add(getClass().getResource("auth.css").toExternalForm());
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.setTitle("新增试卷");
+        dialog.setScene(scene);
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+        saveBtn.setOnAction(e -> {
+            String title = titleField.getText().trim();
+            if (title.isEmpty()) { showAlert(Alert.AlertType.WARNING, "请填写名称"); return; }
+            String desc = descField.getText().trim();
+            String insertPaper = "INSERT INTO exam_papers (title, description, created_by) VALUES (?, ?, ?)";
+            String insertPQ = "INSERT INTO paper_questions (paper_id, question_id, sequence) VALUES (?, ?, ?)";
+            try (Connection conn = DBUtil.getConnection()) {
+                conn.setAutoCommit(false);
+                long pid;
+                try (PreparedStatement ps = conn.prepareStatement(insertPaper, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, title);
+                    ps.setString(2, desc);
+                    ps.setLong(3, currentTeacherId);
+                    ps.executeUpdate();
+                    ResultSet rs = ps.getGeneratedKeys();
+                    rs.next();
+                    pid = rs.getLong(1);
+                }
+                java.util.List<Long> qIds = new java.util.ArrayList<>();
+                if (auto) {
+                    String sqlRand = "SELECT question_id FROM questions ORDER BY RAND() LIMIT ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlRand)) {
+                        ps.setInt(1, countSpinner.getValue());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            while (rs.next()) qIds.add(rs.getLong(1));
+                        }
+                    }
+                } else {
+                    for (javafx.scene.control.CheckBox cb : checkBoxes) {
+                        if (cb.isSelected()) qIds.add((Long) cb.getUserData());
+                    }
+                }
+                try (PreparedStatement ps = conn.prepareStatement(insertPQ)) {
+                    int seq = 1;
+                    for (Long qid : qIds) {
+                        ps.setLong(1, pid);
+                        ps.setLong(2, qid);
+                        ps.setInt(3, seq++);
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+                conn.commit();
+                showAlert(Alert.AlertType.INFORMATION, "新增成功");
+                dialog.close();
+                loadExamPapers();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "新增失败：" + ex.getMessage());
+            }
+        });
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        dialog.showAndWait();
     }
 }
