@@ -10,6 +10,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import com.example.javabig.TeacherController;
+import com.example.javabig.StudentController;
 
 import java.security.MessageDigest;
 import java.sql.Connection;
@@ -52,8 +53,11 @@ public class LoginController {
                         TeacherController controller = loader.getController();
                         controller.setTeacherInfo(userId, user);
                     } else {
-                        // 其他角色主界面（示例为 main-view.fxml）
-                        root = FXMLLoader.load(getClass().getResource("main-view.fxml"));
+                        // 学生窗口
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("student-view.fxml"));
+                        root = loader.load();
+                        StudentController controller = loader.getController();
+                        controller.setStudentInfo(userId, user);
                     }
                     stage.setScene(new Scene(root));
                 } else {

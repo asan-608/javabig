@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.javabig.ExamController" alignment="CENTER" spacing="10">
+    <Label fx:id="paperTitleLabel" style="-fx-font-size: 18px;" />
+    <Label text="考试界面待实现" />
+</VBox>
