@@ -15,6 +15,7 @@ CREATE TABLE question_types (
   type_id  INT     PRIMARY KEY AUTO_INCREMENT,
   code     VARCHAR(20) NOT NULL UNIQUE,  -- e.g. 'single_choice'
   name     VARCHAR(20) NOT NULL           -- e.g. '单选题'
+  score    INT    NOT NULL DEFAULT 0  COMMENT '本选项分值';
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 4. 难度等级表
