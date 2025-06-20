@@ -66,7 +66,9 @@
                                 <TableView fx:id="questionTable" prefHeight="400">
                                     <columns>
                                         <TableColumn fx:id="idColumn" text="ID" prefWidth="70"/>
-                                        <TableColumn fx:id="contentColumn" text="题干" prefWidth="500"/>
+                                        <TableColumn fx:id="contentColumn" text="题干" prefWidth="300"/>
+                                        <TableColumn fx:id="typeColumn" text="题型" prefWidth="120"/>
+                                        <TableColumn fx:id="authorColumn" text="出题人" prefWidth="120"/>
                                     </columns>
                                 </TableView>
                                 <HBox spacing="10">
@@ -85,8 +87,8 @@
                             <text>
                                 试
                                 题
-                                新
-                                增
+                                编
+                                辑
                             </text>
                         </Label>
                     </graphic>

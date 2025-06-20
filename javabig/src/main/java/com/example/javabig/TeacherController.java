@@ -48,6 +48,8 @@ public class TeacherController implements Initializable {
     @FXML private TableView<Question> questionTable;
     @FXML private TableColumn<Question, Long> idColumn;
     @FXML private TableColumn<Question, String> contentColumn;
+    @FXML private TableColumn<Question, String> typeColumn;
+    @FXML private TableColumn<Question, String> authorColumn;
     @FXML private javafx.scene.control.Label teacherNameLabel;
     @FXML private javafx.scene.control.Button topRightButton;
 
@@ -87,6 +89,12 @@ public class TeacherController implements Initializable {
         }
         if (contentColumn != null) {
             contentColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("content"));
+        }
+        if (typeColumn != null) {
+            typeColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("typeName"));
+        }
+        if (authorColumn != null) {
+            authorColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("author"));
         }
 
         if (studentNameColumn != null) {
@@ -162,13 +170,21 @@ public class TeacherController implements Initializable {
             return;
         }
         questionTable.getItems().clear();
-        String sql = "SELECT question_id, content FROM questions WHERE created_by=?";
+        String sql = """
+            SELECT q.question_id, q.content, u.username, qt.name
+              FROM questions q
+              JOIN users u ON q.created_by = u.user_id
+              JOIN question_types qt ON q.type_id = qt.type_id
+             WHERE q.created_by=?
+        """;
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, currentTeacherId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    questionTable.getItems().add(new Question(rs.getLong(1), rs.getString(2)));
+                    questionTable.getItems().add(
+                        new Question(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getString(4))
+                    );
                 }
             }
         } catch (SQLException e) {
@@ -510,19 +526,20 @@ public class TeacherController implements Initializable {
     public static class Question {
         private final long questionId;
         private final String content;
+        private final String author;
+        private final String typeName;
 
-        public Question(long id, String content) {
+        public Question(long id, String content, String author, String typeName) {
             this.questionId = id;
             this.content = content;
+            this.author = author;
+            this.typeName = typeName;
         }
 
-        public long getQuestionId() {
-            return questionId;
-        }
-
-        public String getContent() {
-            return content;
-        }
+        public long getQuestionId() { return questionId; }
+        public String getContent() { return content; }
+        public String getAuthor() { return author; }
+        public String getTypeName() { return typeName; }
     }
 
     /** 学生表格数据结构 */
