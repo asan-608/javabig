@@ -108,3 +108,25 @@ FROM users u
 LEFT JOIN test_sessions s ON u.user_id = s.user_id
 GROUP BY u.user_id, u.username
 ORDER BY total_score DESC;
+
+-- 12. 试卷表：存储试卷信息
+CREATE TABLE exam_papers (
+  paper_id     BIGINT     PRIMARY KEY AUTO_INCREMENT,
+  title        VARCHAR(255) NOT NULL COMMENT '试卷名称',
+  description  TEXT        NULL COMMENT '试卷描述',
+  created_by   BIGINT      NOT NULL COMMENT '出题者（用户）',
+  created_at   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (created_by) REFERENCES users(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 13. 试卷-题目关联表：定义试卷包含哪些题，以及出题顺序
+CREATE TABLE paper_questions (
+  paper_q_id   BIGINT     PRIMARY KEY AUTO_INCREMENT,
+  paper_id     BIGINT     NOT NULL COMMENT '试卷 ID',
+  question_id  BIGINT     NOT NULL COMMENT '题目 ID',
+  sequence     INT        NOT NULL DEFAULT 0 COMMENT '在试卷中的顺序',
+  FOREIGN KEY (paper_id)    REFERENCES exam_papers(paper_id),
+  FOREIGN KEY (question_id) REFERENCES questions(question_id),
+  UNIQUE KEY ux_paper_question (paper_id, question_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
